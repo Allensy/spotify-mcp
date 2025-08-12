@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Import smoke test
+        run: |
+          python - << 'PY'
+          import importlib
+          import sys
+          for mod in ("spotify_tools",):
+              importlib.import_module(mod)
+          print("Imports OK")
+          PY
+
+      - name: Build Docker image
+        run: |
+          docker build -t spotify-mcp:ci .

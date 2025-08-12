@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.env
+
+# macOS
+.DS_Store
+
+# Spotipy token cache
+.cache
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Docker
+*.tar
+
+# Node (if any future tooling)
+node_modules/
+
+
