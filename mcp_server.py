@@ -1,9 +1,8 @@
 import asyncio
-import os
-from typing import List, Optional
+from typing import List
+from config import load_settings
 
 from mcp.server.fastmcp import FastMCP
-from mcp.server.stdio import stdio_server
 
 import spotify_tools as st
 
@@ -107,22 +106,14 @@ async def liked_total() -> int:
     return await st.get_liked_songs_total()
 
 
-async def main() -> None:
-    # Basic sanity check that required env vars are present; Spotipy will raise clearer errors later too.
-    required_envs = ["SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "SPOTIPY_REDIRECT_URI"]
-    missing = [name for name in required_envs if not os.getenv(name)]
-    if missing:
-        missing_str = ", ".join(missing)
-        raise RuntimeError(
-            f"Missing required environment variables: {missing_str}. "
-            "Provide them in your MCP client config under env."
-        )
-
-    async with stdio_server() as (read_stream, write_stream):
-        await mcp.run(read_stream, write_stream)
+def main() -> None:
+    # Load settings early to validate required environment variables.
+    # This keeps behavior consistent across Docker and local runs.
+    load_settings()
+    
+    # Run the FastMCP server with stdio transport
+    mcp.run("stdio")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
-
+    main()

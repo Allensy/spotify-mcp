@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY mcp_server.py ./
 COPY spotify_tools.py ./
+COPY config.py ./
+COPY auth_init.py ./
 
 # Environment variables are provided by the MCP client config at runtime
 ENV PYTHONUNBUFFERED=1

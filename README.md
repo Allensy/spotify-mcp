@@ -26,13 +26,18 @@ The server reads Spotify credentials from environment variables provided by your
 
 ## Environment variables
 
-Provide these via your MCP client config (do not hardcode):
+Provide these via your MCP client config (do not hardcode). These names match Spotipy conventions and are what the server expects.
 
-- SPOTIPY_CLIENT_ID
-- SPOTIPY_CLIENT_SECRET
-- SPOTIPY_REDIRECT_URI
+Required:
 
-These names match Spotipy conventions and are what the server expects.
+- `SPOTIPY_CLIENT_ID`
+- `SPOTIPY_CLIENT_SECRET`
+- `SPOTIPY_REDIRECT_URI`
+
+Optional:
+
+- `SPOTIFY_SCOPE`: Override the default OAuth scope (space-delimited scopes). Defaults to a broad set enabling playback and library/playlist operations.
+- `SPOTIPY_CACHE_PATH`: Token cache file path (inside container). Useful when you want to control the exact cache location. When running Docker, combine with a bind mount to persist the cache.
 
 ## Build
 
@@ -60,7 +65,8 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
       "env": {
         "SPOTIPY_CLIENT_ID": "your-client-id",
         "SPOTIPY_CLIENT_SECRET": "your-client-secret",
-        "SPOTIPY_REDIRECT_URI": "http://localhost:8765/callback"
+        "SPOTIPY_REDIRECT_URI": "http://localhost:8765/callback",
+        "SPOTIPY_CACHE_PATH": "/app/.cache/token" // optional
       }
     }
   }
@@ -69,12 +75,32 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
 
 Notes:
 
-- The volume mount `${HOME}/.cache/spotify-mcp:/app/.cache` persists Spotipy's token cache between runs.
+- The volume mount `${HOME}/.cache/spotify-mcp:/app/.cache` persists Spotipy's token cache between runs. If you set `SPOTIPY_CACHE_PATH`, ensure it points somewhere under `/app/.cache` (e.g., `/app/.cache/token`).
 - The redirect URI must exactly match the one configured in your Spotify app.
 
 ## First-time OAuth
 
 Spotipy performs user authorization on first use.
+
+### Zero-install Docker OAuth (recommended)
+
+Run this once to create and persist a token cache (no local installs needed):
+
+```bash
+docker run --rm -it \
+  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -e SPOTIPY_CLIENT_ID=your-client-id \
+  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
+  -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
+  spotify-mcp:latest python -u auth_init.py
+```
+
+Follow the prompt: open the printed URL, log in, then paste the redirected URL back into the terminal. The token is saved to `/app/.cache/token` (on host: `${HOME}/.cache/spotify-mcp/token`).
+
+After that, your MCP client can run the server container and reuse the cached token automatically.
+
+### Alternative: Local run once
 
 Recommended flow for a smooth auth experience:
 
@@ -83,14 +109,16 @@ Recommended flow for a smooth auth experience:
    ```bash
    python3 -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
-   SPOTIPY_CLIENT_ID=... SPOTIPY_CLIENT_SECRET=... SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
+    SPOTIPY_CLIENT_ID=... SPOTIPY_CLIENT_SECRET=... SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
+    SPOTIFY_SCOPE="user-read-playback-state user-modify-playback-state" \
+    SPOTIPY_CACHE_PATH=".cache/token" \
    python mcp_server.py
    ```
 
 2. Complete the Spotify login in the browser. After success, a `.cache` file is created in the working directory.
 3. Use Docker with a bind mount to persist that cache (as shown above) so the container reuses the token.
 
-Alternatively, you can perform the OAuth entirely inside Docker and copy/paste the auth URL, but mounting the cache is usually simpler.
+Alternatively, you can perform the OAuth entirely inside Docker using the command above.
 
 ## Local development (without Docker)
 

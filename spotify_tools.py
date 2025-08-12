@@ -22,24 +22,16 @@ Functions:
 - get_liked_songs_total: Returns the total count of tracks in the user's Liked Songs library.
 """
 
-import os
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from typing import List, Union
+from config import load_settings
 
 # Load a local .env if present. In Docker/MCP usage, envs should come from the process environment.
 load_dotenv()
 
-SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
-SPOTIPY_CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
-SPOTIPY_REDIRECT_URI = os.getenv("SPOTIPY_REDIRECT_URI")
-
-scope = (
-    "user-read-playback-state user-modify-playback-state user-read-currently-playing "
-    "playlist-modify-public playlist-modify-private playlist-read-private user-top-read "
-    "user-read-recently-played user-follow-modify user-follow-read user-library-read"
-)
+settings = load_settings()
 
 __all__ = [
     "get_spotify_client",
@@ -68,14 +60,16 @@ def get_spotify_client():
     Returns:
         spotipy.Spotify: An authenticated Spotipy client instance.
     """
-    return spotipy.Spotify(
-        auth_manager=SpotifyOAuth(
-            client_id=SPOTIPY_CLIENT_ID,
-            client_secret=SPOTIPY_CLIENT_SECRET,
-            redirect_uri=SPOTIPY_REDIRECT_URI,
-            scope=scope,
-        )
-    )
+    auth_manager_kwargs = {
+        "client_id": settings.client_id,
+        "client_secret": settings.client_secret,
+        "redirect_uri": settings.redirect_uri,
+        "scope": settings.scope,
+    }
+    if settings.cache_path:
+        auth_manager_kwargs["cache_path"] = settings.cache_path
+
+    return spotipy.Spotify(auth_manager=SpotifyOAuth(**auth_manager_kwargs))
 
 
 def get_current_playback():
@@ -90,17 +84,16 @@ def get_current_playback():
 
 
 async def search_spotify(query: str, search_type: str = "track", limit: int = 5, offset: int = 0):
-    """
-    Search Spotify for tracks, albums, artists, or playlists.
+    """Search Spotify for tracks, albums, artists, or playlists.
 
     Args:
         query (str): The search query string.
-        search_type (str, optional): The type of item to search for ('track', 'album', 'artist', 'playlist'). Defaults to 'track'.
-        limit (int, optional): The maximum number of results to return. Defaults to 5.
-        offset (int, optional): The index of the first item to return. Defaults to 0.
+        search_type (str, optional): The type ('track'|'album'|'artist'|'playlist').
+        limit (int, optional): Max number of results. Defaults to 5.
+        offset (int, optional): Index of first item. Defaults to 0.
 
     Returns:
-        str: A formatted string of search results or a message if no results are found.
+        str: A formatted string of results or a not-found message.
     """
     sp = get_spotify_client()
     results = sp.search(q=query, type=search_type, limit=limit, offset=offset)
@@ -112,7 +105,8 @@ async def search_spotify(query: str, search_type: str = "track", limit: int = 5,
         if search_type == "track":
             artists = ", ".join(artist["name"] for artist in item["artists"])
             formatted.append(
-                f"{item['name']} by {artists} (Album: {item['album']['name']}) [ID: {item['id']}]"
+                f"{item['name']} by {artists} (Album: {item['album']['name']}) "
+                f"[ID: {item['id']}]"
             )
         elif search_type == "album":
             artists = ", ".join(artist["name"] for artist in item["artists"])
@@ -126,11 +120,10 @@ async def search_spotify(query: str, search_type: str = "track", limit: int = 5,
 
 
 async def play():
-    """
-    Start playback on the user's active Spotify device.
+    """Start playback on the user's active Spotify device.
 
     Returns:
-        str: A message indicating success or the error encountered.
+        str: Success or error message.
     """
     sp = get_spotify_client()
     try:
@@ -141,11 +134,10 @@ async def play():
 
 
 async def pause():
-    """
-    Pause playback on the user's active Spotify device.
+    """Pause playback on the user's active Spotify device.
 
     Returns:
-        str: A message indicating success or the error encountered.
+        str: Success or error message.
     """
     sp = get_spotify_client()
     try:
@@ -156,11 +148,10 @@ async def pause():
 
 
 async def next_track():
-    """
-    Skip to the next track in the user's active Spotify playback.
+    """Skip to the next track in the user's active Spotify playback.
 
     Returns:
-        str: A message indicating success or the error encountered.
+        str: Success or error message.
     """
     sp = get_spotify_client()
     try:
@@ -171,11 +162,10 @@ async def next_track():
 
 
 async def previous_track():
-    """
-    Return to the previous track in the user's active Spotify playback.
+    """Return to the previous track in the user's active Spotify playback.
 
     Returns:
-        str: A message indicating success or the error encountered.
+        str: Success or error message.
     """
     sp = get_spotify_client()
     try:
@@ -186,11 +176,10 @@ async def previous_track():
 
 
 async def get_currently_playing():
-    """
-    Get information about the currently playing track for the authenticated user.
+    """Get information about the currently playing track for the authenticated user.
 
     Returns:
-        str: A formatted string with the currently playing track, or a message if nothing is playing.
+        str: A formatted now-playing string, or a message if nothing is playing.
     """
     sp = get_spotify_client()
     playback = sp.current_playback()
@@ -203,14 +192,13 @@ async def get_currently_playing():
 
 
 async def play_song(song_name: str):
-    """
-    Search for a song by name and play the first result on the user's active Spotify device.
+    """Search for a song by name and play the first result on the active device.
 
     Args:
         song_name (str): The name of the song to search and play.
 
     Returns:
-        str: A message indicating what was played or an error message.
+        str: What was played or an error message.
     """
     sp = get_spotify_client()
     results = sp.search(q=song_name, type="track", limit=1)
@@ -229,14 +217,13 @@ async def play_song(song_name: str):
 
 
 async def play_song_by_id(song_id: str):
-    """
-    Play a song or playlist directly by its Spotify track or playlist ID/URI on the user's active Spotify device.
+    """Play a song or playlist by Spotify ID/URI on the active device.
 
     Args:
-        song_id (str): The Spotify track or playlist ID or URI to play.
+        song_id (str): Track or playlist ID/URI.
 
     Returns:
-        str: A message indicating what was played or an error message.
+        str: What was played or an error message.
     """
     sp = get_spotify_client()
 
@@ -244,7 +231,8 @@ async def play_song_by_id(song_id: str):
     if (
         song_id.startswith("spotify:playlist:")
         or (
-            song_id.startswith("playlist:") or len(song_id) == 22 and song_id.isalnum()
+            song_id.startswith("playlist:") or len(
+                song_id) == 22 and song_id.isalnum()
         )
     ):
         # Treat as playlist
@@ -322,7 +310,8 @@ async def list_liked_songs(limit: int = 20, offset: int = 0):
     for item in items:
         track = item.get("track", {})
         name = track.get("name", "Unknown")
-        artists = ", ".join(artist["name"] for artist in track.get("artists", []))
+        artists = ", ".join(artist["name"]
+                            for artist in track.get("artists", []))
         track_id = track.get("id", "N/A")
         formatted.append(f"{name} by {artists} [ID: {track_id}]")
     return "\n".join(formatted)
@@ -350,7 +339,8 @@ async def list_playlist_songs(playlist_id: str, limit: int = 20, offset: int = 0
         for item in items:
             track = item.get("track", {})
             name = track.get("name", "Unknown")
-            artists = ", ".join(artist["name"] for artist in track.get("artists", []))
+            artists = ", ".join(artist["name"]
+                                for artist in track.get("artists", []))
             track_id = track.get("id", "N/A")
             formatted.append(f"{name} by {artists} [ID: {track_id}]")
         return "\n".join(formatted)
@@ -428,5 +418,3 @@ async def get_liked_songs_total() -> int:
         return sp.current_user_saved_tracks(limit=1)["total"]
     except Exception as e:
         raise Exception(f"Error fetching liked songs total: {e}")
-
-
