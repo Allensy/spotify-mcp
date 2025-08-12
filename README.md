@@ -60,6 +60,10 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
         "-i",
         "-v",
         "${HOME}/.cache/spotify-mcp:/app/.cache",
+        "-e", "SPOTIPY_CLIENT_ID",
+        "-e", "SPOTIPY_CLIENT_SECRET",
+        "-e", "SPOTIPY_REDIRECT_URI",
+        "-e", "SPOTIPY_CACHE_PATH",
         "spotify-mcp:latest"
       ],
       "env": {
@@ -75,7 +79,7 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
 
 Notes:
 
-- The volume mount `${HOME}/.cache/spotify-mcp:/app/.cache` persists Spotipy's token cache between runs. If you set `SPOTIPY_CACHE_PATH`, ensure it points somewhere under `/app/.cache` (e.g., `/app/.cache/token`).
+- The volume mount `${HOME}/.cache/spotify-mcp:/app/.cache` persists Spotipy's token cache between runs. If you set `SPOTIPY_CACHE_PATH`, ensure it points somewhere under `/app/.cache` (e.g., `/app/.cache/token`). Some MCP clients do not expand `${HOME}`; if you see issues, use an absolute path like `/Users/<you>/.cache/spotify-mcp:/app/.cache`.
 - The redirect URI must exactly match the one configured in your Spotify app.
 
 ## First-time OAuth
