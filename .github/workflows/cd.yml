@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-ghcr:
+  publish-images:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,10 +34,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Compute image tag
         id: meta
         run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
             echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
@@ -51,3 +59,5 @@ jobs:
           tags: |
             ghcr.io/${{ steps.owner.outputs.OWNER_LC }}/spotify-mcp:latest
             ghcr.io/${{ steps.owner.outputs.OWNER_LC }}/spotify-mcp:${{ steps.meta.outputs.TAG }}
+            allesy/spotify-mcp:latest
+            allesy/spotify-mcp:${{ steps.meta.outputs.TAG }}
