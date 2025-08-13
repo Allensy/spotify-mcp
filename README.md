@@ -24,6 +24,16 @@ The server reads Spotify credentials from environment variables provided by your
 - Redirect URI configured in the Spotify app (e.g., `http://localhost:8765/callback`)
 - Docker installed
 
+## Pull from registry (no local build)
+
+If you are using the published image, pull it directly:
+
+```bash
+docker pull docker.io/allesy/spotify-mcp:latest
+```
+
+Then follow the First-time OAuth section below and the MCP client config example, both of which reference the registry image.
+
 ## Environment variables
 
 Provide these via your MCP client config (do not hardcode). These names match Spotipy conventions and are what the server expects.
@@ -64,7 +74,7 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
         "-e", "SPOTIPY_CLIENT_SECRET",
         "-e", "SPOTIPY_REDIRECT_URI",
         "-e", "SPOTIPY_CACHE_PATH",
-        "spotify-mcp:latest"
+        "docker.io/allesy/spotify-mcp:latest"
       ],
       "env": {
         "SPOTIPY_CLIENT_ID": "your-client-id",
@@ -97,7 +107,7 @@ docker run --rm -it \
   -e SPOTIPY_CLIENT_SECRET=your-client-secret \
   -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
   -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-  spotify-mcp:latest python -u auth_init.py
+  docker.io/allesy/spotify-mcp:latest python -u auth_init.py
 ```
 
 Follow the prompt: open the printed URL, log in, then paste the redirected URL back into the terminal. The token is saved to `/app/.cache/token` (on host: `${HOME}/.cache/spotify-mcp/token`).
