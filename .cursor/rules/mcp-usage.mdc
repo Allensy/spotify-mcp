@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+# MCP usage and Docker conventions
+
+- Run the Spotify server via Docker with stdio; env must be passed using `-e NAME` and a bind mount to persist tokens.
+- Required env: `SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, `SPOTIPY_REDIRECT_URI`.
+- Optional env: `SPOTIFY_SCOPE` (space-delimited), `SPOTIPY_CACHE_PATH` (e.g., `/app/.cache/token`).
+- Use absolute host paths for mounts (e.g., `/Users/<you>/.cache/spotify-mcp:/app/.cache`).
+- First-time OAuth: run `auth_init.py` inside Docker, then reuse the token file from the bind mount.
+
+Example MCP client entry (Docker):
+```json
+{
+  "command": "docker",
+  "args": [
+    "run", "--rm", "-i",
+    "-v", "/Users/<you>/.cache/spotify-mcp:/app/.cache",
+    "-e", "SPOTIPY_CLIENT_ID",
+    "-e", "SPOTIPY_CLIENT_SECRET",
+    "-e", "SPOTIPY_REDIRECT_URI",
+    "-e", "SPOTIPY_CACHE_PATH",
+    "docker.io/allesy/spotify-mcp:latest"
+  ]
+}
+```
+
