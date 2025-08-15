@@ -31,7 +31,17 @@ from config import load_settings
 # Load a local .env if present. In Docker/MCP usage, envs should come from the process environment.
 load_dotenv()
 
-settings = load_settings()
+# Lazy-load settings to allow module import without credentials (for testing/CI)
+_settings = None
+
+
+def _get_settings():
+    """Lazy-load settings to allow module imports without credentials."""
+    global _settings
+    if _settings is None:
+        _settings = load_settings()
+    return _settings
+
 
 __all__ = [
     "get_spotify_client",
@@ -60,6 +70,7 @@ def get_spotify_client():
     Returns:
         spotipy.Spotify: An authenticated Spotipy client instance.
     """
+    settings = _get_settings()
     auth_manager_kwargs = {
         "client_id": settings.client_id,
         "client_secret": settings.client_secret,
