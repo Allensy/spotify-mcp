@@ -9,9 +9,8 @@ alwaysApply: true
 - Docker auth initializer: [`auth_init.py`](mdc:auth_init.py) — copy/paste OAuth in Docker, writes token to cache
 - Top-level docs: [`README.md`](mdc:README.md)
 
-Subprojects (registry-friendly builds):
+Subproject (registry-friendly build):
 - Spotify image sources: [`spotify/Dockerfile`](mdc:spotify/Dockerfile), [`spotify/mcp_server.py`](mdc:spotify/mcp_server.py), [`spotify/spotify_tools.py`](mdc:spotify/spotify_tools.py), [`spotify/requirements.txt`](mdc:spotify/requirements.txt), [`spotify/README.md`](mdc:spotify/README.md)
-- Telegram image sources: [`telegram/Dockerfile`](mdc:telegram/Dockerfile), [`telegram/mcp_server.py`](mdc:telegram/mcp_server.py), [`telegram/requirements.txt`](mdc:telegram/requirements.txt), [`telegram/README.md`](mdc:telegram/README.md)
 
 Notes:
 - The MCP server communicates strictly over stdio; do not expose ports.
