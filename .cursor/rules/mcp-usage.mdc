@@ -10,6 +10,7 @@ alwaysApply: true
 - First-time OAuth: run `auth_init.py` inside Docker, then reuse the token file from the bind mount.
 
 Example MCP client entry (Docker):
+
 ```json
 {
   "command": "docker",
@@ -24,4 +25,3 @@ Example MCP client entry (Docker):
   ]
 }
 ```
-

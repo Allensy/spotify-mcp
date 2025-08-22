@@ -6,6 +6,8 @@ The server reads Spotify credentials from environment variables provided by your
 
 ## Features (tools)
 
+### Core Playback & Library
+
 - search: search tracks, albums, artists, or playlists
 - play / pause / next_track / previous_track
 - currently_playing: friendly now-playing string
@@ -17,6 +19,25 @@ The server reads Spotify credentials from environment variables provided by your
 - add_to_liked: add tracks to Liked Songs
 - add_to_playlist: add tracks to a playlist
 - liked_total: count of tracks in Liked Songs
+
+### 🎵 Audio Feature Analysis & Discovery
+
+- **get_audio_features**: Get detailed audio features (danceability, energy, valence, tempo, etc.) for tracks
+- **analyze_track**: Comprehensive analysis with musical insights and recommendations for a single track
+- **find_similar_tracks**: Find tracks similar to a reference track based on audio characteristics
+- **filter_tracks_by_features**: Filter your music by specific audio criteria (e.g., "find high-energy dance tracks")
+- **get_track_recommendations**: Get personalized recommendations based on seed tracks/artists/genres and target audio features
+
+These audio analysis tools enable powerful music discovery based on:
+
+- **Danceability**: How suitable a track is for dancing
+- **Energy**: Perceptual measure of intensity and activity  
+- **Valence**: Musical positivity (happy vs sad)
+- **Tempo**: Beats per minute
+- **Acousticness**: Whether the track is acoustic vs electronic
+- **Instrumentalness**: Likelihood the track contains no vocals
+- **Speechiness**: Presence of spoken words
+- **Liveness**: Whether the track was recorded live
 
 ## Prerequisites
 
@@ -149,6 +170,8 @@ Your MCP client can also run `python -u mcp_server.py` directly instead of Docke
 
 ## API reference (tool signatures)
 
+### Core Playback & Library
+
 - search(query: string, search_type: 'track'|'album'|'artist'|'playlist' = 'track', limit: int = 5, offset: int = 0) -> string
 - play() -> string
 - pause() -> string
@@ -162,7 +185,15 @@ Your MCP client can also run `python -u mcp_server.py` directly instead of Docke
 - list_playlist_songs(playlist_id: string, limit: int = 20, offset: int = 0) -> string
 - add_to_liked(song_ids: string[]) -> string
 - add_to_playlist(playlist_id: string, song_ids: string[]) -> string
-- liked_total() -> number
+- liked_total() -> int
+
+### Audio Feature Analysis & Discovery
+
+- get_audio_features(track_ids: string[]) -> string
+- analyze_track(track_id: string) -> string
+- find_similar_tracks(track_id: string, source: string = "liked", similarity_threshold: float = 0.15) -> string
+- filter_tracks_by_features(source: string = "liked", min_danceability?: float, max_danceability?: float, min_energy?: float, max_energy?: float, min_valence?: float, max_valence?: float, min_tempo?: float, max_tempo?: float, min_acousticness?: float, max_acousticness?: float, limit: int = 20) -> string
+- get_track_recommendations(seed_track_ids?: string[], seed_artists?: string[], seed_genres?: string[], target_danceability?: float, target_energy?: float, target_valence?: float, target_tempo?: float, limit: int = 10) -> string
 
 ## Security
 

@@ -10,8 +10,10 @@ alwaysApply: true
 - Top-level docs: [`README.md`](mdc:README.md)
 
 Subproject (registry-friendly build):
+
 - Spotify image sources: [`spotify/Dockerfile`](mdc:spotify/Dockerfile), [`spotify/mcp_server.py`](mdc:spotify/mcp_server.py), [`spotify/spotify_tools.py`](mdc:spotify/spotify_tools.py), [`spotify/requirements.txt`](mdc:spotify/requirements.txt), [`spotify/README.md`](mdc:spotify/README.md)
 
 Notes:
+
 - The MCP server communicates strictly over stdio; do not expose ports.
 - Docker images rely on env provided by the MCP client; token/session persistence is via a bind mount to `/app/.cache`.
