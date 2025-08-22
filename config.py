@@ -26,36 +26,17 @@ from typing import Optional
 
 
 DEFAULT_SCOPE: str = (
-    # "user-read-playback-state "
-    # "user-modify-playback-state "
-    # "user-read-currently-playing "
-    # "playlist-modify-public "
-    # "playlist-modify-private "
-    # "playlist-read-private "
-    # "user-top-read "
-    # "user-read-recently-played "
-    # "user-follow-modify "
-    # "user-follow-read "
-    # "user-library-read"
-    "ugc-image-upload",
-    "user-read-playback-state",
-    "user-modify-playback-state",
-    "user-read-currently-playing",
-    "app-remote-control",
-    "streaming",
-    "playlist-read-private",
-    "playlist-modify-private",
-    "playlist-read-collaborative",
-    "playlist-modify-public",
-    "user-follow-modify",
-    "user-follow-read",
-    "user-read-email",
-    "user-read-private",
-    "user-library-read",
-    "user-library-modify",
-    "user-top-read",
-    "user-read-playback-position",
-    "user-read-recently-played"
+    "user-read-playback-state "
+    "user-modify-playback-state "
+    "user-read-currently-playing "
+    "playlist-modify-public "
+    "playlist-modify-private "
+    "playlist-read-private "
+    "user-top-read "
+    "user-read-recently-played "
+    "user-follow-modify "
+    "user-follow-read "
+    "user-library-read"
 )
 
 
