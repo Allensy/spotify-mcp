@@ -51,6 +51,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.1.0",
     "black>=23.0.0",
     "mypy>=1.0.0",
     "pylint>=2.15.0",
@@ -67,6 +68,7 @@ test = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.1.0",
 ]
 
 [project.scripts]
@@ -138,6 +140,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+timeout = 300
 addopts = [
     "--strict-markers",
     "--strict-config",
@@ -145,6 +148,7 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
+    "--timeout=300",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
