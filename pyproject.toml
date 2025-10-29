@@ -57,6 +57,8 @@ dev = [
     "mypy>=1.0.0",
     "pylint>=2.15.0",
     "ruff>=0.1.0",
+    "safety>=2.3.0",
+    "bandit>=1.7.0",
 ]
 docs = [
     "sphinx>=5.0.0",

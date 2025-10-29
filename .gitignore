@@ -5,6 +5,14 @@ __pycache__/
 .venv/
 .env
 
+# Testing
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # macOS
 .DS_Store
 
