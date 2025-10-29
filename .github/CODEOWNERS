@@ -1,0 +1,25 @@
+# Default reviewers for code changes
+
+# Global owners
+* @Allensy
+
+# Source code
+/src/ @Allensy
+
+# Tests
+/tests/ @Allensy
+
+# Documentation
+*.md @Allensy
+/docs/ @Allensy
+
+# CI/CD
+/.github/ @Allensy
+
+# Docker
+/Dockerfile @Allensy
+
+# Configuration
+/pyproject.toml @Allensy
+/requirements.txt @Allensy
+

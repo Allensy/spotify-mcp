@@ -9,4 +9,3 @@ __url__ = "https://github.com/yourusername/spotify-mcp"
 __author__ = "Spotify MCP Contributors"
 __license__ = "MIT"
 __copyright__ = "Copyright 2025 Spotify MCP Contributors"
-

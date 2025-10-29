@@ -12,6 +12,8 @@ updates:
       time: "09:00"
       timezone: "America/Los_Angeles"
     open-pull-requests-limit: 5
+    reviewers:
+      - "Allensy"
     labels:
       - "dependencies"
       - "github-actions"
@@ -28,6 +30,8 @@ updates:
       time: "09:00"
       timezone: "America/Los_Angeles"
     open-pull-requests-limit: 3
+    reviewers:
+      - "Allensy"
     labels:
       - "dependencies"
       - "docker"
@@ -44,6 +48,8 @@ updates:
       time: "09:00"
       timezone: "America/Los_Angeles"
     open-pull-requests-limit: 10
+    reviewers:
+      - "Allensy"
     labels:
       - "dependencies"
       - "python"
@@ -70,4 +76,3 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
