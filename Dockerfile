@@ -10,15 +10,13 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY mcp_server.py ./
-COPY spotify_tools.py ./
-COPY config.py ./
-COPY auth_init.py ./
+COPY src/ ./src/
 
 # Environment variables are provided by the MCP client config at runtime
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 
 # The container runs over stdio; no port is exposed. CMD must keep process in foreground.
-CMD ["python", "-u", "mcp_server.py"]
+CMD ["python", "-u", "-m", "spotify_mcp.server"]
 
 

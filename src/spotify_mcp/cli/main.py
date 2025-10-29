@@ -1,4 +1,8 @@
 """
+Command-line interface for Spotify MCP.
+
+Provides commands for authentication and running the MCP server.
+
 Interactive OAuth initializer for Spotify MCP (Docker-friendly).
 
 Usage (Docker, zero local installs):
@@ -25,7 +29,7 @@ from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 
-from config import load_settings
+from spotify_mcp.config import load_settings
 
 
 def _ensure_parent_dir(path: str) -> None:
@@ -104,6 +108,17 @@ def main() -> int:
     else:
         print("Token acquisition failed unexpectedly.")
         return 1
+
+
+def auth_init() -> None:
+    """Entry point for spotify-mcp-auth command."""
+    sys.exit(main())
+
+
+def main_cli() -> None:
+    """Entry point for spotify-mcp command to run the server."""
+    from spotify_mcp.server import main as server_main
+    server_main()
 
 
 if __name__ == "__main__":

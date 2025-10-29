@@ -29,14 +29,15 @@ DEFAULT_SCOPE: str = (
     "user-read-playback-state "
     "user-modify-playback-state "
     "user-read-currently-playing "
+    "playlist-read-private "
     "playlist-modify-public "
     "playlist-modify-private "
-    "playlist-read-private "
+    "user-library-read "
+    "user-library-modify "
     "user-top-read "
     "user-read-recently-played "
-    "user-follow-modify "
     "user-follow-read "
-    "user-library-read"
+    "user-follow-modify"
 )
 
 

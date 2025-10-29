@@ -1,49 +1,104 @@
-# Spotify MCP Server (Docker)
+# Spotify MCP Server
 
-A Dockerized Model Context Protocol (MCP) server that exposes Spotify controls and queries as MCP tools using Spotipy.
+A Model Context Protocol (MCP) server that exposes Spotify controls and queries as MCP tools using Spotipy.
 
-The server reads Spotify credentials from environment variables provided by your MCP client config and communicates over stdio.
+**Ready to use via Docker** - No local Python install required!
+
+## Quick Start (3 steps)
+
+### 1. Get Spotify API Credentials
+
+1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Create an app (or use an existing one)
+3. Note your **Client ID** and **Client Secret**
+4. Add `http://127.0.0.1:8888/callback` to **Redirect URIs** in app settings
+5. If your app is in "Development Mode", add your Spotify account email to the **User Management** section
+
+### 2. One-Time Authentication (Docker)
+
+Run this command to authenticate (replace with your credentials):
+
+```bash
+docker run --rm -it \
+  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -e SPOTIPY_CLIENT_ID=your-client-id \
+  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
+  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
+  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init
+```
+
+- Open the URL shown in your browser
+- Authorize the app
+- Copy the full redirect URL from your browser and paste it back into the terminal
+- Done! Token is saved.
+
+### 3. Add to Your MCP Client
+
+Add this to your MCP client config (e.g., `~/.cursor/mcp.json` for Cursor, or Claude Desktop's config):
+
+```json
+{
+  "mcpServers": {
+    "spotify": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "/Users/YOUR_USERNAME/.cache/spotify-mcp:/app/.cache",
+        "-e", "SPOTIPY_CLIENT_ID",
+        "-e", "SPOTIPY_CLIENT_SECRET",
+        "-e", "SPOTIPY_REDIRECT_URI",
+        "-e", "SPOTIPY_CACHE_PATH",
+        "docker.io/allesy/spotify-mcp:latest"
+      ],
+      "env": {
+        "SPOTIPY_CLIENT_ID": "your-client-id",
+        "SPOTIPY_CLIENT_SECRET": "your-client-secret",
+        "SPOTIPY_REDIRECT_URI": "http://127.0.0.1:8888/callback",
+        "SPOTIPY_CACHE_PATH": "/app/.cache/token"
+      }
+    }
+  }
+}
+```
+
+**Important**: Replace `/Users/YOUR_USERNAME` with your actual home directory path (some MCP clients don't expand `${HOME}`).
+
+That's it! Restart your MCP client and start controlling Spotify! 🎵
+
+---
 
 ## Features (tools)
 
-### Core Playback & Library
+### Playback & Library
 
-- search: search tracks, albums, artists, or playlists
-- play / pause / next_track / previous_track
-- currently_playing: friendly now-playing string
-- play_song: search by name and play first result
-- play_by_id: play a track or playlist by Spotify ID/URI
-- list_playlists: list user playlists
-- list_liked: list liked songs
-- list_playlist_songs: list songs in a playlist by ID
-- add_to_liked: add tracks to Liked Songs
-- add_to_playlist: add tracks to a playlist
-- liked_total: count of tracks in Liked Songs
-
-### 🎵 Audio Feature Analysis & Discovery
-
-- **get_audio_features**: Get detailed audio features (danceability, energy, valence, tempo, etc.) for tracks
-- **analyze_track**: Comprehensive analysis with musical insights and recommendations for a single track
-- **find_similar_tracks**: Find tracks similar to a reference track based on audio characteristics
-- **filter_tracks_by_features**: Filter your music by specific audio criteria (e.g., "find high-energy dance tracks")
-- **get_track_recommendations**: Get personalized recommendations based on seed tracks/artists/genres and target audio features
-
-These audio analysis tools enable powerful music discovery based on:
-
-- **Danceability**: How suitable a track is for dancing
-- **Energy**: Perceptual measure of intensity and activity  
-- **Valence**: Musical positivity (happy vs sad)
-- **Tempo**: Beats per minute
-- **Acousticness**: Whether the track is acoustic vs electronic
-- **Instrumentalness**: Likelihood the track contains no vocals
-- **Speechiness**: Presence of spoken words
-- **Liveness**: Whether the track was recorded live
+- **search**: Search tracks, albums, artists, or playlists
+- **play / pause / next_track / previous_track**: Control playback
+- **currently_playing**: Get friendly now-playing string
+- **play_song**: Search by name and play first result
+- **play_by_id**: Play a track or playlist by Spotify ID/URI
+- **list_playlists**: List user playlists
+- **list_liked**: List liked songs
+- **list_playlist_songs**: List songs in a playlist by ID
+- **add_to_liked**: Add tracks to Liked Songs
+- **add_to_playlist**: Add tracks to a playlist
+- **liked_total**: Count of tracks in Liked Songs
+- **add_to_queue**: Add tracks to playback queue
+- **get_queue**: View current queue
+- **get_recently_played**: View listening history
+- **get_top_tracks / get_top_artists**: View your most played tracks and artists
+- **list_devices**: List available Spotify devices
+- **transfer_playback**: Move playback to different device
+- **set_shuffle / set_repeat**: Control playback modes
+- **seek_position / set_volume**: Fine-tune playback
 
 ## Prerequisites
 
-- Spotify Developer app (Client ID/Secret) from the Spotify Dashboard
-- Redirect URI configured in the Spotify app (e.g., `http://localhost:8765/callback`)
-- Docker installed
+- **Docker** installed on your system
+- **Spotify Developer app** (free) - Create one at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+  - Client ID and Client Secret
+  - Redirect URI: `http://127.0.0.1:8888/callback` added to app settings
+  - Your Spotify email added to User Management (if in Development Mode)
 
 ## Pull from registry (no local build)
 
@@ -100,8 +155,8 @@ Example MCP client configuration (JSON) that runs the server via Docker and pass
       "env": {
         "SPOTIPY_CLIENT_ID": "your-client-id",
         "SPOTIPY_CLIENT_SECRET": "your-client-secret",
-        "SPOTIPY_REDIRECT_URI": "http://localhost:8765/callback",
-        "SPOTIPY_CACHE_PATH": "/app/.cache/token" // optional
+        "SPOTIPY_REDIRECT_URI": "http://127.0.0.1:8888/callback",
+        "SPOTIPY_CACHE_PATH": "/app/.cache/token"
       }
     }
   }
@@ -126,9 +181,9 @@ docker run --rm -it \
   -v ${HOME}/.cache/spotify-mcp:/app/.cache \
   -e SPOTIPY_CLIENT_ID=your-client-id \
   -e SPOTIPY_CLIENT_SECRET=your-client-secret \
-  -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
+  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
   -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-  docker.io/allesy/spotify-mcp:latest python -u auth_init.py
+  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init
 ```
 
 Follow the prompt: open the printed URL, log in, then paste the redirected URL back into the terminal. The token is saved to `/app/.cache/token` (on host: `${HOME}/.cache/spotify-mcp/token`).
@@ -139,21 +194,24 @@ After that, your MCP client can run the server container and reuse the cached to
 
 Recommended flow for a smooth auth experience:
 
-1. Run the server locally once (outside Docker) so it can open a browser easily and write a `.cache` token:
+1. Install dependencies and run the auth script locally:
 
    ```bash
    python3 -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
-    SPOTIPY_CLIENT_ID=... SPOTIPY_CLIENT_SECRET=... SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
-    SPOTIFY_SCOPE="user-read-playback-state user-modify-playback-state" \
-    SPOTIPY_CACHE_PATH=".cache/token" \
-   python mcp_server.py
+   
+   export SPOTIPY_CLIENT_ID=your-client-id
+   export SPOTIPY_CLIENT_SECRET=your-client-secret
+   export SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
+   export SPOTIPY_CACHE_PATH=/Users/$(whoami)/.cache/spotify-mcp/token
+   
+   python -m spotify_mcp.cli.auth_init
    ```
 
-2. Complete the Spotify login in the browser. After success, a `.cache` file is created in the working directory.
-3. Use Docker with a bind mount to persist that cache (as shown above) so the container reuses the token.
+2. Follow the prompt: open the URL in your browser, authorize, and paste the redirect URL back.
+3. The token is now cached and can be used by the MCP server.
 
-Alternatively, you can perform the OAuth entirely inside Docker using the command above.
+Alternatively, you can let your MCP client handle the OAuth automatically on first connection (it will open your browser).
 
 ## Local development (without Docker)
 
@@ -162,11 +220,12 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export SPOTIPY_CLIENT_ID=...
 export SPOTIPY_CLIENT_SECRET=...
-export SPOTIPY_REDIRECT_URI=http://localhost:8765/callback
-python mcp_server.py
+export SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
+export PYTHONPATH=src
+python -m spotify_mcp.server
 ```
 
-Your MCP client can also run `python -u mcp_server.py` directly instead of Docker if preferred.
+Your MCP client can also run `python -m spotify_mcp.server` directly instead of Docker if preferred (set `PYTHONPATH=src` in the env).
 
 ## API reference (tool signatures)
 
@@ -186,14 +245,17 @@ Your MCP client can also run `python -u mcp_server.py` directly instead of Docke
 - add_to_liked(song_ids: string[]) -> string
 - add_to_playlist(playlist_id: string, song_ids: string[]) -> string
 - liked_total() -> int
-
-### Audio Feature Analysis & Discovery
-
-- get_audio_features(track_ids: string[]) -> string
-- analyze_track(track_id: string) -> string
-- find_similar_tracks(track_id: string, source: string = "liked", similarity_threshold: float = 0.15) -> string
-- filter_tracks_by_features(source: string = "liked", min_danceability?: float, max_danceability?: float, min_energy?: float, max_energy?: float, min_valence?: float, max_valence?: float, min_tempo?: float, max_tempo?: float, min_acousticness?: float, max_acousticness?: float, limit: int = 20) -> string
-- get_track_recommendations(seed_track_ids?: string[], seed_artists?: string[], seed_genres?: string[], target_danceability?: float, target_energy?: float, target_valence?: float, target_tempo?: float, limit: int = 10) -> string
+- add_to_queue(track_id: string) -> string
+- get_queue() -> string
+- get_recently_played(limit: int = 20) -> string
+- get_top_tracks(limit: int = 20, time_range: string = "medium_term") -> string
+- get_top_artists(limit: int = 20, time_range: string = "medium_term") -> string
+- list_devices() -> string
+- transfer_playback(device_id: string) -> string
+- set_shuffle(state: bool) -> string
+- set_repeat(state: string) -> string
+- seek_position(position_ms: int) -> string
+- set_volume(volume_percent: int) -> string
 
 ## Security
 
@@ -203,10 +265,47 @@ Your MCP client can also run `python -u mcp_server.py` directly instead of Docke
 
 ## Troubleshooting
 
-- Missing env: The server exits with a helpful error if `SPOTIPY_*` vars are absent.
-- Redirect URI mismatch: Ensure the exact URI is configured in both Spotify Dashboard and env.
-- No active device: Some playback operations require an active Spotify device; open Spotify on a device first.
-- Auth loop in Docker: Run locally once to generate `.cache` and mount it into the container.
+### Authentication Issues
+
+**403 Forbidden Error**
+
+- ✅ Check that your Spotify account email is added to **User Management** in your Spotify Developer app (required for Development Mode)
+- ✅ Verify the redirect URI is **exactly** `http://127.0.0.1:8888/callback` in both:
+  - Spotify Developer Dashboard app settings
+  - Your MCP client config and auth command
+
+**Token Expired or Invalid**
+
+- Delete the cached token and re-authenticate:
+
+  ```bash
+  rm ~/.cache/spotify-mcp/token
+  # Then run the auth_init command again
+  ```
+
+### Docker Issues
+
+**Volume Mount Path Not Working**
+
+- Some MCP clients don't expand `${HOME}` - use absolute paths like `/Users/YOUR_USERNAME/.cache/spotify-mcp`
+- On Windows, use: `C:\Users\YOUR_USERNAME\.cache\spotify-mcp`
+
+**Container Can't Find Token**
+
+- Ensure `SPOTIPY_CACHE_PATH` in your MCP config matches the path used during authentication (`/app/.cache/token`)
+- Check that the volume mount maps correctly: `-v /local/path:/app/.cache`
+
+### Playback Issues
+
+**"No active device" Error**
+
+- Open Spotify on any device (phone, desktop, web player) before trying playback commands
+- The device must be actively playing or at least opened and visible in Spotify
+
+**Commands Not Working**
+
+- Restart your MCP client after configuration changes
+- Check that the Spotify app server is running: look for it in your MCP client's server list
 
 ## License
 
