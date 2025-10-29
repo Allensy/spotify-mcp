@@ -36,8 +36,8 @@ def _has_spotify_credentials() -> bool:
 
 # Skip marker for tests requiring Spotify credentials
 skip_without_credentials = pytest.mark.skipif(
-    not _has_spotify_credentials(), 
-    reason="Spotify credentials not configured (integration tests require real credentials)"
+    not _has_spotify_credentials(),
+    reason="Spotify credentials not configured (integration tests require real credentials)",
 )
 
 
