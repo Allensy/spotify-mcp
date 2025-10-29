@@ -24,7 +24,6 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-
 DEFAULT_SCOPE: str = (
     "user-read-playback-state "
     "user-modify-playback-state "

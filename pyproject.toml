@@ -7,7 +7,7 @@ name = "spotify-mcp"
 version = "1.0.0"
 description = "Model Context Protocol server for Spotify - Control Spotify through AI assistants"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Spotify MCP Contributors"}
@@ -32,8 +32,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -53,10 +51,13 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.1.0",
     "black>=23.0.0",
     "mypy>=1.0.0",
     "pylint>=2.15.0",
     "ruff>=0.1.0",
+    "safety>=2.3.0",
+    "bandit>=1.7.0",
 ]
 docs = [
     "sphinx>=5.0.0",
@@ -67,6 +68,7 @@ test = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.1.0",
 ]
 
 [project.scripts]
@@ -94,7 +96,7 @@ spotify_mcp = ["py.typed"]
 # Black configuration
 [tool.black]
 line-length = 79
-target-version = ['py38', 'py39', 'py310', 'py311']
+target-version = ['py310', 'py311', 'py312']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -113,7 +115,7 @@ exclude = '''
 
 # MyPy configuration
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -138,6 +140,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+timeout = 300
 addopts = [
     "--strict-markers",
     "--strict-config",
@@ -145,6 +148,7 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
+    "--timeout=300",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -177,7 +181,7 @@ exclude_lines = [
 # Ruff configuration
 [tool.ruff]
 line-length = 79
-target-version = "py38"
+target-version = "py310"
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings

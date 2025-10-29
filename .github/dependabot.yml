@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # Enable version updates for Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Allensy"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Allensy"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Allensy"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+

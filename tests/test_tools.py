@@ -5,11 +5,11 @@ This module provides comprehensive tests for all Spotify MCP functionalities.
 Tests are designed to work with real Spotify API calls using user credentials.
 """
 
-import sys
-from pathlib import Path
 import asyncio
-from typing import List, Dict, Any
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 import pytest
 
@@ -21,10 +21,14 @@ if str(src_path) not in sys.path:
 
 # Check if credentials are available for Spotify API tests
 def _has_spotify_credentials() -> bool:
-    """Check if Spotify credentials are configured."""
+    """Check if Spotify credentials are configured and valid (not test dummies)."""
     try:
         from spotify_mcp.config import load_settings
+
         settings = load_settings()
+        # Skip if credentials are dummy test values used in CI
+        if settings.client_id in ("test-client-id", "test_client_id"):
+            return False
         return bool(settings.client_id and settings.client_secret)
     except Exception:
         return False
@@ -33,7 +37,7 @@ def _has_spotify_credentials() -> bool:
 # Skip marker for tests requiring Spotify credentials
 skip_without_credentials = pytest.mark.skipif(
     not _has_spotify_credentials(),
-    reason="Spotify credentials not configured"
+    reason="Spotify credentials not configured (integration tests require real credentials)",
 )
 
 
@@ -49,11 +53,7 @@ class SpotifyMCPTester:
         self.skipped_tests = 0
 
     def log_test(
-        self,
-        test_name: str,
-        status: str,
-        message: str = "",
-        error: str = ""
+        self, test_name: str, status: str, message: str = "", error: str = ""
     ) -> None:
         """Log test result."""
         self.total_tests += 1
@@ -67,13 +67,15 @@ class SpotifyMCPTester:
             self.skipped_tests += 1
             print(f"⏭️  {test_name}: SKIPPED - {message}")
 
-        self.results.append({
-            "test_name": test_name,
-            "status": status,
-            "message": message,
-            "error": error,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.results.append(
+            {
+                "test_name": test_name,
+                "status": status,
+                "message": message,
+                "error": error,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     async def test_search(self) -> None:
         """Test search functionality."""
@@ -115,8 +117,8 @@ class SpotifyMCPTester:
         """Test playback information retrieval."""
         try:
             from spotify_mcp.tools import (
+                get_current_playback,
                 get_currently_playing,
-                get_current_playback
             )
 
             # Test currently playing
@@ -125,9 +127,7 @@ class SpotifyMCPTester:
                 self.log_test("Get Currently Playing", "PASS")
             else:
                 self.log_test(
-                    "Get Currently Playing",
-                    "SKIP",
-                    "No active playback"
+                    "Get Currently Playing", "SKIP", "No active playback"
                 )
 
             # Test current playback
@@ -136,9 +136,7 @@ class SpotifyMCPTester:
                 self.log_test("Get Current Playback", "PASS")
             else:
                 self.log_test(
-                    "Get Current Playback",
-                    "SKIP",
-                    "No active playback"
+                    "Get Current Playback", "SKIP", "No active playback"
                 )
 
         except Exception as e:
@@ -148,9 +146,9 @@ class SpotifyMCPTester:
         """Test library management functions."""
         try:
             from spotify_mcp.tools import (
-                list_liked_songs,
                 get_liked_songs_total,
-                list_user_playlists
+                list_liked_songs,
+                list_user_playlists,
             )
 
             # Test liked songs total
@@ -159,9 +157,7 @@ class SpotifyMCPTester:
                 self.log_test("Get Liked Songs Total", "PASS")
             else:
                 self.log_test(
-                    "Get Liked Songs Total",
-                    "FAIL",
-                    error="Invalid total"
+                    "Get Liked Songs Total", "FAIL", error="Invalid total"
                 )
 
             # Test list liked songs
@@ -176,11 +172,7 @@ class SpotifyMCPTester:
             if result:
                 self.log_test("List User Playlists", "PASS")
             else:
-                self.log_test(
-                    "List User Playlists",
-                    "FAIL",
-                    error="No result"
-                )
+                self.log_test("List User Playlists", "FAIL", error="No result")
 
         except Exception as e:
             self.log_test("Library Management", "FAIL", error=str(e))
@@ -220,8 +212,8 @@ class SpotifyMCPTester:
         try:
             from spotify_mcp.tools import (
                 get_recently_played,
+                get_top_artists,
                 get_top_tracks,
-                get_top_artists
             )
 
             # Test recently played
@@ -229,11 +221,7 @@ class SpotifyMCPTester:
             if result and "No recently played" not in result:
                 self.log_test("Get Recently Played", "PASS")
             else:
-                self.log_test(
-                    "Get Recently Played",
-                    "FAIL",
-                    error="No result"
-                )
+                self.log_test("Get Recently Played", "FAIL", error="No result")
 
             # Test top tracks
             result = await get_top_tracks(limit=5, time_range="short_term")
@@ -260,6 +248,7 @@ class SpotifyMCPTester:
 
         # Check if credentials are configured
         from spotify_mcp.config import load_settings
+
         try:
             settings = load_settings()
             print("✅ Credentials configured")

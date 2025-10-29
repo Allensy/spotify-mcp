@@ -1,51 +1,57 @@
-# Pull Request
+---
+name: 📝 Pull Request
+about: Create a pull request
+title: ''
+labels: ''
+assignees: ''
+---
 
 ## Description
-
-Please include a summary of the changes and the related issue. Include relevant motivation and context.
-
-Fixes # (issue)
+<!-- Describe your changes in detail -->
 
 ## Type of Change
-
-Please delete options that are not relevant.
-
+<!-- Mark the relevant option with an 'x' -->
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 - [ ] Code refactoring
 - [ ] Performance improvement
-- [ ] Test addition/modification
+- [ ] Test update
 
-## How Has This Been Tested?
+## Related Issues
+<!-- Link related issues here -->
+Closes #(issue)
 
-Please describe the tests that you ran to verify your changes.
+## Changes Made
+<!-- List the main changes you made -->
+- 
+- 
+- 
 
-- [ ] Test A
-- [ ] Test B
+## Testing
+<!-- Describe the tests you ran and their results -->
+- [ ] Added new tests
+- [ ] Updated existing tests
+- [ ] All tests pass locally
 
-**Test Configuration**:
-
-- Python version:
-- OS:
-- Spotify account type:
+### Test Coverage
+<!-- If applicable, mention test coverage -->
+- Coverage: <!-- e.g., 85% -->
 
 ## Checklist
-
+<!-- Mark completed items with an 'x' -->
 - [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my code
+- [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published
-- [ ] I have updated the CHANGELOG.md
 
-## Screenshots (if appropriate)
+## Screenshots (if applicable)
+<!-- Add screenshots to help explain your changes -->
 
 ## Additional Notes
-
-Add any additional notes about the PR here.
-
+<!-- Any additional information that reviewers should know -->

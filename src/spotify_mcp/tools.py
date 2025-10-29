@@ -27,10 +27,11 @@ Functions:
 - get_track_recommendations: Get recommendations based on audio features.
 """
 
-from dotenv import load_dotenv
+from typing import List, Union
+
 import spotipy
+from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
-from typing import List, Union, Optional
 
 from spotify_mcp.config import load_settings
 
@@ -112,10 +113,7 @@ def get_current_playback():
 
 
 async def search_spotify(
-    query: str,
-    search_type: str = "track",
-    limit: int = 5,
-    offset: int = 0
+    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
 ) -> str:
     """Search Spotify for tracks, albums, artists, or playlists.
 
@@ -147,7 +145,7 @@ async def search_spotify(
         elif search_type == "artist":
             formatted.append(f"{item['name']} [ID: {item['id']}]")
         elif search_type == "playlist":
-            owner = item['owner']['display_name']
+            owner = item["owner"]["display_name"]
             formatted.append(f"{item['name']} by {owner} [ID: {item['id']}]")
     return "\n".join(formatted)
 
@@ -261,12 +259,10 @@ async def play_song_by_id(song_id: str):
     sp = get_spotify_client()
 
     # Detect playlist URIs/IDs
-    if (
-        song_id.startswith("spotify:playlist:")
-        or (
-            song_id.startswith("playlist:") or len(
-                song_id) == 22 and song_id.isalnum()
-        )
+    if song_id.startswith("spotify:playlist:") or (
+        song_id.startswith("playlist:")
+        or len(song_id) == 22
+        and song_id.isalnum()
     ):
         # Treat as playlist
         if not song_id.startswith("spotify:playlist:"):
@@ -343,14 +339,17 @@ async def list_liked_songs(limit: int = 20, offset: int = 0):
     for item in items:
         track = item.get("track", {})
         name = track.get("name", "Unknown")
-        artists = ", ".join(artist["name"]
-                            for artist in track.get("artists", []))
+        artists = ", ".join(
+            artist["name"] for artist in track.get("artists", [])
+        )
         track_id = track.get("id", "N/A")
         formatted.append(f"{name} by {artists} [ID: {track_id}]")
     return "\n".join(formatted)
 
 
-async def list_playlist_songs(playlist_id: str, limit: int = 20, offset: int = 0):
+async def list_playlist_songs(
+    playlist_id: str, limit: int = 20, offset: int = 0
+):
     """
     List the songs in a playlist by its Spotify playlist ID.
 
@@ -372,8 +371,9 @@ async def list_playlist_songs(playlist_id: str, limit: int = 20, offset: int = 0
         for item in items:
             track = item.get("track", {})
             name = track.get("name", "Unknown")
-            artists = ", ".join(artist["name"]
-                                for artist in track.get("artists", []))
+            artists = ", ".join(
+                artist["name"] for artist in track.get("artists", [])
+            )
             track_id = track.get("id", "N/A")
             formatted.append(f"{name} by {artists} [ID: {track_id}]")
         return "\n".join(formatted)
@@ -412,7 +412,9 @@ async def add_songs_to_liked(song_ids: Union[str, List[str]]):
         return f"Error adding track(s) to Liked Songs: {e}"
 
 
-async def add_songs_to_playlist(playlist_id: str, song_ids: Union[str, List[str]]):
+async def add_songs_to_playlist(
+    playlist_id: str, song_ids: Union[str, List[str]]
+):
     """
     Add one or more songs to a specified playlist.
 
@@ -536,10 +538,12 @@ async def get_recently_played(limit: int = 20) -> str:
         for item in items:
             track = item["track"]
             played_at = item["played_at"][:19].replace(
-                "T", " ")  # Format timestamp
+                "T", " "
+            )  # Format timestamp
             artists = ", ".join(artist["name"] for artist in track["artists"])
             formatted.append(
-                f"• {track['name']} by {artists} (played {played_at})")
+                f"• {track['name']} by {artists} (played {played_at})"
+            )
 
         return "\n".join(formatted)
 
@@ -547,7 +551,9 @@ async def get_recently_played(limit: int = 20) -> str:
         return f"Error getting recently played tracks: {e}"
 
 
-async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> str:
+async def get_top_tracks(
+    limit: int = 20, time_range: str = "medium_term"
+) -> str:
     """
     Get the user's top tracks.
 
@@ -562,7 +568,8 @@ async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> st
 
     try:
         results = sp.current_user_top_tracks(
-            limit=min(limit, 50), time_range=time_range)
+            limit=min(limit, 50), time_range=time_range
+        )
         items = results.get("items", [])
 
         if not items:
@@ -571,7 +578,7 @@ async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> st
         time_range_names = {
             "short_term": "last 4 weeks",
             "medium_term": "last 6 months",
-            "long_term": "all time"
+            "long_term": "all time",
         }
         range_name = time_range_names.get(time_range, time_range)
 
@@ -586,7 +593,9 @@ async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> st
         return f"Error getting top tracks: {e}"
 
 
-async def get_top_artists(limit: int = 20, time_range: str = "medium_term") -> str:
+async def get_top_artists(
+    limit: int = 20, time_range: str = "medium_term"
+) -> str:
     """
     Get the user's top artists.
 
@@ -601,7 +610,8 @@ async def get_top_artists(limit: int = 20, time_range: str = "medium_term") -> s
 
     try:
         results = sp.current_user_top_artists(
-            limit=min(limit, 50), time_range=time_range)
+            limit=min(limit, 50), time_range=time_range
+        )
         items = results.get("items", [])
 
         if not items:
@@ -610,14 +620,15 @@ async def get_top_artists(limit: int = 20, time_range: str = "medium_term") -> s
         time_range_names = {
             "short_term": "last 4 weeks",
             "medium_term": "last 6 months",
-            "long_term": "all time"
+            "long_term": "all time",
         }
         range_name = time_range_names.get(time_range, time_range)
 
         formatted = [f"🎤 **Your Top Artists ({range_name}):**\n"]
         for i, artist in enumerate(items, 1):
-            genres = ", ".join(artist.get("genres", [])[
-                               :2])  # Show up to 2 genres
+            genres = ", ".join(
+                artist.get("genres", [])[:2]
+            )  # Show up to 2 genres
             genre_info = f" ({genres})" if genres else ""
             formatted.append(f"{i}. {artist['name']}{genre_info}")
 
@@ -649,7 +660,8 @@ async def list_devices() -> str:
             device_type = device.get("type", "Unknown")
             volume = device.get("volume_percent", "N/A")
             formatted.append(
-                f"• {device['name']} ({device_type}) - Volume: {volume}%{active}")
+                f"• {device['name']} ({device_type}) - Volume: {volume}%{active}"
+            )
 
         return "\n".join(formatted)
 
