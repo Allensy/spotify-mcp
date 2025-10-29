@@ -21,11 +21,14 @@ if str(src_path) not in sys.path:
 
 # Check if credentials are available for Spotify API tests
 def _has_spotify_credentials() -> bool:
-    """Check if Spotify credentials are configured."""
+    """Check if Spotify credentials are configured and valid (not test dummies)."""
     try:
         from spotify_mcp.config import load_settings
 
         settings = load_settings()
+        # Skip if credentials are dummy test values used in CI
+        if settings.client_id in ("test-client-id", "test_client_id"):
+            return False
         return bool(settings.client_id and settings.client_secret)
     except Exception:
         return False
@@ -33,7 +36,8 @@ def _has_spotify_credentials() -> bool:
 
 # Skip marker for tests requiring Spotify credentials
 skip_without_credentials = pytest.mark.skipif(
-    not _has_spotify_credentials(), reason="Spotify credentials not configured"
+    not _has_spotify_credentials(), 
+    reason="Spotify credentials not configured (integration tests require real credentials)"
 )
 
 
