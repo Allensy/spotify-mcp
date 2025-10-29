@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Core Functionality
 
-- MCP server implementation with 31 Spotify control tools
+- MCP server implementation with 25 Spotify control tools
 - Complete Spotify API integration via spotipy
 - Docker support with authentication flow
 - OAuth token caching for persistent sessions
@@ -32,15 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add songs to liked songs
 - Add songs to playlists
 - Get total count of liked songs
-
-#### Audio Analysis & Discovery
-
-- Get audio features for tracks
-- Comprehensive track analysis with insights
-- Find similar tracks based on audio features
-- Filter tracks by specific audio characteristics
-- Get personalized recommendations
-- Detailed audio analysis (sections, bars, beats, segments)
 
 #### User Analytics
 
@@ -84,17 +75,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CI/CD Enhancements**
+  - Integrated test coverage reporting with Codecov
+  - Automated coverage reports on every PR and push to main
+  - Dependabot configuration for automated dependency updates
+    - GitHub Actions monitoring (weekly)
+    - Docker base image monitoring (weekly)
+    - Python package monitoring with grouped updates (weekly)
+  - GitHub labels automation script for standardized issue/PR labeling
+
+### Removed
+
+- Deprecated audio feature functions: `get_audio_features`, `analyze_track`, `get_audio_analysis`, `find_similar_tracks`, `filter_tracks_by_features`, and `get_track_recommendations` have been removed as they were not fully implemented
+
+### Changed
+
+- **CI Workflow**
+  - CI now runs full test suite with coverage reporting
+  - Test dependencies are installed during CI runs
+  - Coverage XML reports are uploaded to Codecov
+
 ### Planned
 
 - Sphinx documentation website
-- Additional audio analysis features
 - Playlist management tools
 - Enhanced error messages
 - Performance optimizations
 - Additional test coverage
 
 ---
-
 ## Version History
 
 ### Versioning Scheme
@@ -115,6 +126,4 @@ We use [Semantic Versioning](https://semver.org/):
 - **Security** for vulnerability fixes
 
 ---
-
 [1.0.0]: https://github.com/yourusername/spotify-mcp/releases/tag/v1.0.0
-
