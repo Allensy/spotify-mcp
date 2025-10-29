@@ -44,7 +44,7 @@ jobs:
           prerelease: false
 
       - name: Upload release assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-artifacts
           path: ./dist/*
