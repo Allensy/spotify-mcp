@@ -11,7 +11,7 @@ Usage (Docker, zero local installs):
     -v ${HOME}/.cache/spotify-mcp:/app/.cache \
     -e SPOTIPY_CLIENT_ID=... \
     -e SPOTIPY_CLIENT_SECRET=... \
-    -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
+    -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
     -e SPOTIPY_CACHE_PATH=/app/.cache/token \
     spotify-mcp:latest python -u auth_init.py
 

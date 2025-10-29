@@ -20,11 +20,17 @@ Functions:
 - add_songs_to_liked: Adds one or more songs to the user's Liked Songs (library).
 - add_songs_to_playlist: Adds one or more songs to a specified playlist.
 - get_liked_songs_total: Returns the total count of tracks in Liked Songs.
-- get_audio_features: Get detailed audio features for tracks.
-- analyze_track: Get comprehensive audio analysis for a single track.
-- find_similar_tracks: Find tracks with similar audio characteristics.
-- filter_tracks_by_features: Filter tracks based on audio feature criteria.
-- get_track_recommendations: Get recommendations based on audio features.
+- add_to_queue: Adds a track to the user's playback queue.
+- get_queue: Gets the user's current playback queue.
+- get_recently_played: Gets the user's recently played tracks.
+- get_top_tracks: Gets the user's top tracks.
+- get_top_artists: Gets the user's top artists.
+- list_devices: Gets the user's available Spotify devices.
+- transfer_playback: Transfers playback to a different device.
+- set_shuffle: Sets shuffle mode for playback.
+- set_repeat: Sets repeat mode for playback.
+- seek_position: Seeks to a position in the current track.
+- set_volume: Sets the volume for the current playback device.
 """
 
 from typing import List, Union
