@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import sys
 
-from spotify_mcp.config import load_settings
 from spotipy.oauth2 import SpotifyOAuth
+
+from spotify_mcp.config import load_settings
 
 
 def main() -> None:

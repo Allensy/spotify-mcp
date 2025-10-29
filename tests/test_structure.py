@@ -5,11 +5,11 @@ This script validates the structure and completeness of the MCP implementation
 without requiring Spotify credentials.
 """
 
+import ast
+import inspect
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
-import inspect
-import ast
+from typing import Any, Dict, List
 
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent.parent / "src"
@@ -46,9 +46,11 @@ class StructureValidator:
     def validate_imports(self) -> None:
         """Validate that all modules can be imported."""
         try:
-            from spotify_mcp import server  # noqa: F401
-            from spotify_mcp import tools  # noqa: F401
-            from spotify_mcp import config  # noqa: F401
+            from spotify_mcp import (
+                config,  # noqa: F401
+                server,  # noqa: F401
+                tools,  # noqa: F401
+            )
             from spotify_mcp.cli import auth_init  # noqa: F401
 
             self.log_check(
@@ -367,7 +369,7 @@ class StructureValidator:
     def validate_error_handling(self) -> None:
         """Validate error handling in functions."""
         try:
-            with open("src/spotify_mcp/tools.py", "r", encoding="utf-8") as f:
+            with open("src/spotify_mcp/tools.py", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -441,7 +443,7 @@ class StructureValidator:
     def validate_requirements(self) -> None:
         """Validate requirements.txt content."""
         try:
-            with open("requirements.txt", "r", encoding="utf-8") as f:
+            with open("requirements.txt", encoding="utf-8") as f:
                 content = f.read()
 
             required_packages = [

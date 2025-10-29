@@ -5,11 +5,11 @@ This module provides comprehensive tests for all Spotify MCP functionalities.
 Tests are designed to work with real Spotify API calls using user credentials.
 """
 
-import sys
-from pathlib import Path
 import asyncio
-from typing import List, Dict, Any
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 import pytest
 
@@ -113,8 +113,8 @@ class SpotifyMCPTester:
         """Test playback information retrieval."""
         try:
             from spotify_mcp.tools import (
-                get_currently_playing,
                 get_current_playback,
+                get_currently_playing,
             )
 
             # Test currently playing
@@ -142,8 +142,8 @@ class SpotifyMCPTester:
         """Test library management functions."""
         try:
             from spotify_mcp.tools import (
-                list_liked_songs,
                 get_liked_songs_total,
+                list_liked_songs,
                 list_user_playlists,
             )
 
@@ -208,8 +208,8 @@ class SpotifyMCPTester:
         try:
             from spotify_mcp.tools import (
                 get_recently_played,
-                get_top_tracks,
                 get_top_artists,
+                get_top_tracks,
             )
 
             # Test recently played

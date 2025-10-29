@@ -3,7 +3,7 @@
 [![CI](https://github.com/Allensy/spotify-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Allensy/spotify-mcp/actions/workflows/ci.yml)
 [![Docker Build & Push](https://github.com/Allensy/spotify-mcp/actions/workflows/docker.yml/badge.svg)](https://github.com/Allensy/spotify-mcp/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A Model Context Protocol (MCP) server that exposes Spotify controls and queries as MCP tools using Spotipy.

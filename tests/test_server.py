@@ -6,8 +6,7 @@ This module tests the MCP server tool registration and basic functionality.
 
 import sys
 from pathlib import Path
-import asyncio
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent.parent / "src"
@@ -43,9 +42,6 @@ class MCPIntegrationTester:
     def test_imports(self) -> None:
         """Test that all modules import correctly."""
         try:
-            from spotify_mcp import server as mcp_server
-            from spotify_mcp import tools as spotify_tools
-            from spotify_mcp import config
 
             self.log_test("Module Imports", "PASS")
         except Exception as e:

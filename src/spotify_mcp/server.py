@@ -1,10 +1,9 @@
-from typing import List, Optional
+from typing import List
 
 from mcp.server.fastmcp import FastMCP
 
-from spotify_mcp.config import load_settings
 from spotify_mcp import tools as st
-
+from spotify_mcp.config import load_settings
 
 mcp = FastMCP("spotify-mcp")
 
