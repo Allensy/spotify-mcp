@@ -643,7 +643,7 @@ async def list_devices() -> str:
     Get the user's available Spotify devices.
 
     Returns:
-        str: Formatted list of available devices.
+        str: Formatted list of available devices with their IDs.
     """
     sp = get_spotify_client()
 
@@ -659,9 +659,12 @@ async def list_devices() -> str:
             active = " (ACTIVE)" if device.get("is_active") else ""
             device_type = device.get("type", "Unknown")
             volume = device.get("volume_percent", "N/A")
-            formatted.append(
-                f"• {device['name']} ({device_type}) - Volume: {volume}%{active}"
+            device_id = device.get("id", "N/A")
+            device_info = (
+                f"• {device['name']} ({device_type}) - "
+                f"Volume: {volume}%{active}\n  ID: {device_id}"
             )
+            formatted.append(device_info)
 
         return "\n".join(formatted)
 
