@@ -10,14 +10,18 @@ mcp = FastMCP("spotify-mcp")
 
 
 @mcp.tool()
-async def search(query: str, search_type: str = "track", limit: int = 5, offset: int = 0) -> str:
+async def search(
+    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
+) -> str:
     """Search Spotify for tracks, albums, artists, or playlists.
 
     - search_type: one of 'track', 'album', 'artist', 'playlist'
     - limit: max results to return
     - offset: index of first item to return
     """
-    return await st.search_spotify(query=query, search_type=search_type, limit=limit, offset=offset)
+    return await st.search_spotify(
+        query=query, search_type=search_type, limit=limit, offset=offset
+    )
 
 
 @mcp.tool()
@@ -82,9 +86,13 @@ async def list_liked(limit: int = 20, offset: int = 0) -> str:
 
 
 @mcp.tool()
-async def list_playlist_songs(playlist_id: str, limit: int = 20, offset: int = 0) -> str:
+async def list_playlist_songs(
+    playlist_id: str, limit: int = 20, offset: int = 0
+) -> str:
     """List songs in a playlist by playlist ID."""
-    return await st.list_playlist_songs(playlist_id=playlist_id, limit=limit, offset=offset)
+    return await st.list_playlist_songs(
+        playlist_id=playlist_id, limit=limit, offset=offset
+    )
 
 
 @mcp.tool()
@@ -96,7 +104,9 @@ async def add_to_liked(song_ids: List[str]) -> str:
 @mcp.tool()
 async def add_to_playlist(playlist_id: str, song_ids: List[str]) -> str:
     """Add one or more track IDs/URIs to a playlist by playlist ID."""
-    return await st.add_songs_to_playlist(playlist_id=playlist_id, song_ids=song_ids)
+    return await st.add_songs_to_playlist(
+        playlist_id=playlist_id, song_ids=song_ids
+    )
 
 
 @mcp.tool()
@@ -132,7 +142,9 @@ async def get_recently_played(limit: int = 20) -> str:
 
 
 @mcp.tool()
-async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> str:
+async def get_top_tracks(
+    limit: int = 20, time_range: str = "medium_term"
+) -> str:
     """Get the user's top tracks.
 
     Args:
@@ -143,7 +155,9 @@ async def get_top_tracks(limit: int = 20, time_range: str = "medium_term") -> st
 
 
 @mcp.tool()
-async def get_top_artists(limit: int = 20, time_range: str = "medium_term") -> str:
+async def get_top_artists(
+    limit: int = 20, time_range: str = "medium_term"
+) -> str:
     """Get the user's top artists.
 
     Args:

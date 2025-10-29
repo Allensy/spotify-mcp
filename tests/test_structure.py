@@ -28,11 +28,7 @@ class StructureValidator:
         self.failed_checks = 0
 
     def log_check(
-        self,
-        check_name: str,
-        status: str,
-        message: str = "",
-        error: str = ""
+        self, check_name: str, status: str, message: str = "", error: str = ""
     ) -> None:
         """Log validation check result."""
         self.total_checks += 1
@@ -54,10 +50,11 @@ class StructureValidator:
             from spotify_mcp import tools  # noqa: F401
             from spotify_mcp import config  # noqa: F401
             from spotify_mcp.cli import auth_init  # noqa: F401
+
             self.log_check(
                 "Module Imports",
                 "PASS",
-                "All core modules import successfully"
+                "All core modules import successfully",
             )
         except Exception as e:
             self.log_check("Module Imports", "FAIL", error=str(e))
@@ -70,30 +67,51 @@ class StructureValidator:
             # Expected tools
             expected_tools = {
                 # Basic playback
-                "search", "play", "pause", "next_track", "previous_track",
-                "currently_playing", "play_song", "play_by_id",
+                "search",
+                "play",
+                "pause",
+                "next_track",
+                "previous_track",
+                "currently_playing",
+                "play_song",
+                "play_by_id",
                 # Library
-                "list_playlists", "list_liked", "list_playlist_songs",
-                "add_to_liked", "add_to_playlist", "liked_total",
+                "list_playlists",
+                "list_liked",
+                "list_playlist_songs",
+                "add_to_liked",
+                "add_to_playlist",
+                "liked_total",
                 # Queue
-                "add_to_queue", "get_queue",
+                "add_to_queue",
+                "get_queue",
                 # Analytics
-                "get_recently_played", "get_top_tracks", "get_top_artists",
+                "get_recently_played",
+                "get_top_tracks",
+                "get_top_artists",
                 # Devices
-                "list_devices", "transfer_playback",
+                "list_devices",
+                "transfer_playback",
                 # Playback controls
-                "set_shuffle", "set_repeat", "seek_position", "set_volume",
+                "set_shuffle",
+                "set_repeat",
+                "seek_position",
+                "set_volume",
             }
 
             # Get registered functions (exclude imports and special names)
             registered = set()
             exclude_names = {
-                'main', 'load_settings', 'FastMCP', 'List', 'Optional',
-                'st'  # spotify_tools alias
+                "main",
+                "load_settings",
+                "FastMCP",
+                "List",
+                "Optional",
+                "st",  # spotify_tools alias
             }
             for name in dir(mcp_server):
                 obj = getattr(mcp_server, name)
-                if callable(obj) and not name.startswith('_'):
+                if callable(obj) and not name.startswith("_"):
                     if name not in exclude_names:
                         registered.add(name)
 
@@ -104,19 +122,19 @@ class StructureValidator:
                 self.log_check(
                     "MCP Tool Registration",
                     "PASS",
-                    f"All {len(expected_tools)} expected tools registered"
+                    f"All {len(expected_tools)} expected tools registered",
                 )
             elif missing:
                 self.log_check(
                     "MCP Tool Registration",
                     "FAIL",
-                    error=f"Missing tools: {', '.join(sorted(missing))}"
+                    error=f"Missing tools: {', '.join(sorted(missing))}",
                 )
             elif extra:
                 self.log_check(
                     "MCP Tool Registration",
                     "FAIL",
-                    error=f"Unexpected tools: {', '.join(sorted(extra))}"
+                    error=f"Unexpected tools: {', '.join(sorted(extra))}",
                 )
 
         except Exception as e:
@@ -129,23 +147,39 @@ class StructureValidator:
 
             expected_functions = {
                 # Core
-                "get_spotify_client", "get_current_playback",
+                "get_spotify_client",
+                "get_current_playback",
                 "search_spotify",
                 # Playback
-                "play", "pause", "next_track", "previous_track",
-                "get_currently_playing", "play_song", "play_song_by_id",
+                "play",
+                "pause",
+                "next_track",
+                "previous_track",
+                "get_currently_playing",
+                "play_song",
+                "play_song_by_id",
                 # Library
-                "list_user_playlists", "list_liked_songs",
-                "list_playlist_songs", "add_songs_to_liked",
-                "add_songs_to_playlist", "get_liked_songs_total",
+                "list_user_playlists",
+                "list_liked_songs",
+                "list_playlist_songs",
+                "add_songs_to_liked",
+                "add_songs_to_playlist",
+                "get_liked_songs_total",
                 # Queue
-                "add_to_queue", "get_queue",
+                "add_to_queue",
+                "get_queue",
                 # Analytics
-                "get_recently_played", "get_top_tracks", "get_top_artists",
+                "get_recently_played",
+                "get_top_tracks",
+                "get_top_artists",
                 # Devices
-                "list_devices", "transfer_playback",
+                "list_devices",
+                "transfer_playback",
                 # Playback controls
-                "set_shuffle", "set_repeat", "seek_position", "set_volume",
+                "set_shuffle",
+                "set_repeat",
+                "seek_position",
+                "set_volume",
             }
 
             # Check functions exist
@@ -158,38 +192,38 @@ class StructureValidator:
                 self.log_check(
                     "Spotify Tools Functions",
                     "PASS",
-                    f"All {len(expected_functions)} functions defined"
+                    f"All {len(expected_functions)} functions defined",
                 )
             else:
                 self.log_check(
                     "Spotify Tools Functions",
                     "FAIL",
-                    error=f"Missing functions: {', '.join(sorted(missing))}"
+                    error=f"Missing functions: {', '.join(sorted(missing))}",
                 )
 
             # Validate __all__ export
-            if hasattr(spotify_tools, '__all__'):
+            if hasattr(spotify_tools, "__all__"):
                 exported = set(spotify_tools.__all__)
-                expected_exports = expected_functions - {'get_spotify_client'}
+                expected_exports = expected_functions - {"get_spotify_client"}
                 missing_exports = expected_exports - exported
 
                 if not missing_exports:
                     self.log_check(
                         "Spotify Tools __all__ Export",
                         "PASS",
-                        f"{len(exported)} functions properly exported"
+                        f"{len(exported)} functions properly exported",
                     )
                 else:
                     self.log_check(
                         "Spotify Tools __all__ Export",
                         "FAIL",
-                        error=f"Not exported: {', '.join(missing_exports)}"
+                        error=f"Not exported: {', '.join(missing_exports)}",
                     )
             else:
                 self.log_check(
                     "Spotify Tools __all__ Export",
                     "FAIL",
-                    error="__all__ not defined"
+                    error="__all__ not defined",
                 )
 
         except Exception as e:
@@ -201,15 +235,31 @@ class StructureValidator:
             from spotify_mcp import tools as spotify_tools
 
             async_functions = [
-                "search_spotify", "play", "pause", "next_track",
-                "previous_track", "get_currently_playing", "play_song",
-                "play_song_by_id", "list_user_playlists", "list_liked_songs",
-                "list_playlist_songs", "add_songs_to_liked",
-                "add_songs_to_playlist", "get_liked_songs_total",
-                "add_to_queue", "get_queue",
-                "get_recently_played", "get_top_tracks", "get_top_artists",
-                "list_devices", "transfer_playback", "set_shuffle",
-                "set_repeat", "seek_position", "set_volume",
+                "search_spotify",
+                "play",
+                "pause",
+                "next_track",
+                "previous_track",
+                "get_currently_playing",
+                "play_song",
+                "play_song_by_id",
+                "list_user_playlists",
+                "list_liked_songs",
+                "list_playlist_songs",
+                "add_songs_to_liked",
+                "add_songs_to_playlist",
+                "get_liked_songs_total",
+                "add_to_queue",
+                "get_queue",
+                "get_recently_played",
+                "get_top_tracks",
+                "get_top_artists",
+                "list_devices",
+                "transfer_playback",
+                "set_shuffle",
+                "set_repeat",
+                "seek_position",
+                "set_volume",
             ]
 
             not_async = []
@@ -223,13 +273,13 @@ class StructureValidator:
                 self.log_check(
                     "Async Function Definitions",
                     "PASS",
-                    f"All {len(async_functions)} functions are async"
+                    f"All {len(async_functions)} functions are async",
                 )
             else:
                 self.log_check(
                     "Async Function Definitions",
                     "FAIL",
-                    error=f"Not async: {', '.join(not_async)}"
+                    error=f"Not async: {', '.join(not_async)}",
                 )
 
         except Exception as e:
@@ -241,8 +291,13 @@ class StructureValidator:
             from spotify_mcp import tools as spotify_tools
 
             functions_to_check = [
-                "search_spotify", "play", "pause", "add_to_queue",
-                "get_queue", "list_devices", "get_top_tracks",
+                "search_spotify",
+                "play",
+                "pause",
+                "add_to_queue",
+                "get_queue",
+                "list_devices",
+                "get_top_tracks",
             ]
 
             missing_hints = []
@@ -258,13 +313,13 @@ class StructureValidator:
                 self.log_check(
                     "Type Hints",
                     "PASS",
-                    "Sample functions have proper type hints"
+                    "Sample functions have proper type hints",
                 )
             else:
                 self.log_check(
                     "Type Hints",
                     "FAIL",
-                    error=f"Missing hints: {', '.join(missing_hints)}"
+                    error=f"Missing hints: {', '.join(missing_hints)}",
                 )
 
         except Exception as e:
@@ -277,8 +332,13 @@ class StructureValidator:
 
             # Check spotify_tools functions
             functions_to_check = [
-                "search_spotify", "play", "pause", "add_to_queue",
-                "get_queue", "list_devices", "get_top_tracks",
+                "search_spotify",
+                "play",
+                "pause",
+                "add_to_queue",
+                "get_queue",
+                "list_devices",
+                "get_top_tracks",
             ]
 
             missing_docs = []
@@ -292,13 +352,13 @@ class StructureValidator:
                 self.log_check(
                     "Function Docstrings",
                     "PASS",
-                    "All sample functions have docstrings"
+                    "All sample functions have docstrings",
                 )
             else:
                 self.log_check(
                     "Function Docstrings",
                     "FAIL",
-                    error=f"Missing/short docs: {', '.join(missing_docs)}"
+                    error=f"Missing/short docs: {', '.join(missing_docs)}",
                 )
 
         except Exception as e:
@@ -307,7 +367,7 @@ class StructureValidator:
     def validate_error_handling(self) -> None:
         """Validate error handling in functions."""
         try:
-            with open('src/spotify_mcp/tools.py', 'r', encoding='utf-8') as f:
+            with open("src/spotify_mcp/tools.py", "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -332,14 +392,14 @@ class StructureValidator:
                         "Error Handling Coverage",
                         "PASS",
                         f"{coverage:.0f}% of async functions have "
-                        f"error handling"
+                        f"error handling",
                     )
                 else:
                     self.log_check(
                         "Error Handling Coverage",
                         "FAIL",
                         error=f"Only {coverage:.0f}% coverage "
-                        f"(expected ≥80%)"
+                        f"(expected ≥80%)",
                     )
 
         except Exception as e:
@@ -350,14 +410,14 @@ class StructureValidator:
         import os
 
         required_files = [
-            'src/spotify_mcp/server.py',
-            'src/spotify_mcp/tools.py',
-            'src/spotify_mcp/config.py',
-            'src/spotify_mcp/cli/auth_init.py',
-            'requirements.txt',
-            'Dockerfile',
-            'README.md',
-            'TESTING.md',
+            "src/spotify_mcp/server.py",
+            "src/spotify_mcp/tools.py",
+            "src/spotify_mcp/config.py",
+            "src/spotify_mcp/cli/auth_init.py",
+            "requirements.txt",
+            "Dockerfile",
+            "README.md",
+            "TESTING.md",
         ]
 
         missing_files = []
@@ -369,25 +429,25 @@ class StructureValidator:
             self.log_check(
                 "Project File Structure",
                 "PASS",
-                f"All {len(required_files)} required files present"
+                f"All {len(required_files)} required files present",
             )
         else:
             self.log_check(
                 "Project File Structure",
                 "FAIL",
-                error=f"Missing: {', '.join(missing_files)}"
+                error=f"Missing: {', '.join(missing_files)}",
             )
 
     def validate_requirements(self) -> None:
         """Validate requirements.txt content."""
         try:
-            with open('requirements.txt', 'r', encoding='utf-8') as f:
+            with open("requirements.txt", "r", encoding="utf-8") as f:
                 content = f.read()
 
             required_packages = [
-                'spotipy',
-                'python-dotenv',
-                'mcp',
+                "spotipy",
+                "python-dotenv",
+                "mcp",
             ]
 
             missing_packages = []
@@ -399,27 +459,25 @@ class StructureValidator:
                 self.log_check(
                     "Requirements File",
                     "PASS",
-                    f"All {len(required_packages)} required packages listed"
+                    f"All {len(required_packages)} required packages listed",
                 )
             else:
                 self.log_check(
                     "Requirements File",
                     "FAIL",
-                    error=f"Missing: {', '.join(missing_packages)}"
+                    error=f"Missing: {', '.join(missing_packages)}",
                 )
 
             # Check spotipy version
-            if 'spotipy>=2.25' in content:
+            if "spotipy>=2.25" in content:
                 self.log_check(
-                    "Spotipy Version",
-                    "PASS",
-                    "Using spotipy>=2.25.0"
+                    "Spotipy Version", "PASS", "Using spotipy>=2.25.0"
                 )
             else:
                 self.log_check(
                     "Spotipy Version",
                     "FAIL",
-                    error="Should use spotipy>=2.25.0"
+                    error="Should use spotipy>=2.25.0",
                 )
 
         except Exception as e:
@@ -456,7 +514,8 @@ class StructureValidator:
         print(f"❌ Failed: {self.failed_checks}")
         success_rate = (
             (self.passed_checks / self.total_checks * 100)
-            if self.total_checks > 0 else 0
+            if self.total_checks > 0
+            else 0
         )
         print(f"Success Rate: {success_rate:.1f}%")
         print("=" * 60 + "\n")

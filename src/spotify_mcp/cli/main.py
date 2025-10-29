@@ -91,10 +91,7 @@ def main() -> int:
     try:
         token_info = oauth.get_access_token(code)
     except Exception as e:  # noqa: BLE001
-        print(
-            "Error exchanging code for token: "
-            f"{e}"
-        )
+        print("Error exchanging code for token: " f"{e}")
         return 1
 
     # Spotipy caches automatically when using SpotifyOAuth with cache_path
@@ -118,6 +115,7 @@ def auth_init() -> None:
 def main_cli() -> None:
     """Entry point for spotify-mcp command to run the server."""
     from spotify_mcp.server import main as server_main
+
     server_main()
 
 

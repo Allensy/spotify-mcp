@@ -26,11 +26,7 @@ class MCPIntegrationTester:
         self.failed_tests = 0
 
     def log_test(
-        self,
-        test_name: str,
-        status: str,
-        message: str = "",
-        error: str = ""
+        self, test_name: str, status: str, message: str = "", error: str = ""
     ) -> None:
         """Log test result."""
         self.total_tests += 1
@@ -50,6 +46,7 @@ class MCPIntegrationTester:
             from spotify_mcp import server as mcp_server
             from spotify_mcp import tools as spotify_tools
             from spotify_mcp import config
+
             self.log_test("Module Imports", "PASS")
         except Exception as e:
             self.log_test("Module Imports", "FAIL", error=str(e))
@@ -58,13 +55,12 @@ class MCPIntegrationTester:
         """Test MCP server creation."""
         try:
             from spotify_mcp import server as mcp_server
-            if hasattr(mcp_server, 'mcp'):
+
+            if hasattr(mcp_server, "mcp"):
                 self.log_test("MCP Server Creation", "PASS")
             else:
                 self.log_test(
-                    "MCP Server Creation",
-                    "FAIL",
-                    error="MCP object not found"
+                    "MCP Server Creation", "FAIL", error="MCP object not found"
                 )
         except Exception as e:
             self.log_test("MCP Server Creation", "FAIL", error=str(e))
@@ -110,8 +106,7 @@ class MCPIntegrationTester:
 
             # Get registered tools
             registered_tools = [
-                name for name in dir(mcp_server)
-                if not name.startswith('_')
+                name for name in dir(mcp_server) if not name.startswith("_")
             ]
 
             missing_tools = []
@@ -123,13 +118,13 @@ class MCPIntegrationTester:
                 self.log_test(
                     "Tool Registration",
                     "PASS",
-                    f"All {len(expected_tools)} tools registered"
+                    f"All {len(expected_tools)} tools registered",
                 )
             else:
                 self.log_test(
                     "Tool Registration",
                     "FAIL",
-                    error=f"Missing tools: {', '.join(missing_tools)}"
+                    error=f"Missing tools: {', '.join(missing_tools)}",
                 )
 
         except Exception as e:
@@ -179,13 +174,13 @@ class MCPIntegrationTester:
                 self.log_test(
                     "Spotify Tools Exports",
                     "PASS",
-                    f"All {len(expected_exports)} functions exported"
+                    f"All {len(expected_exports)} functions exported",
                 )
             else:
                 self.log_test(
                     "Spotify Tools Exports",
                     "FAIL",
-                    error=f"Missing exports: {', '.join(missing_exports)}"
+                    error=f"Missing exports: {', '.join(missing_exports)}",
                 )
 
         except Exception as e:
@@ -202,27 +197,19 @@ class MCPIntegrationTester:
             # Validate required fields
             if not settings.client_id:
                 self.log_test(
-                    "Config Validation",
-                    "FAIL",
-                    error="Missing client_id"
+                    "Config Validation", "FAIL", error="Missing client_id"
                 )
             elif not settings.client_secret:
                 self.log_test(
-                    "Config Validation",
-                    "FAIL",
-                    error="Missing client_secret"
+                    "Config Validation", "FAIL", error="Missing client_secret"
                 )
             elif not settings.redirect_uri:
                 self.log_test(
-                    "Config Validation",
-                    "FAIL",
-                    error="Missing redirect_uri"
+                    "Config Validation", "FAIL", error="Missing redirect_uri"
                 )
             else:
                 self.log_test(
-                    "Config Validation",
-                    "PASS",
-                    "All required config present"
+                    "Config Validation", "PASS", "All required config present"
                 )
 
         except Exception as e:
@@ -252,7 +239,8 @@ class MCPIntegrationTester:
         print(f"❌ Failed: {self.failed_tests}")
         success_rate = (
             (self.passed_tests / self.total_tests * 100)
-            if self.total_tests > 0 else 0
+            if self.total_tests > 0
+            else 0
         )
         print(f"Success Rate: {success_rate:.1f}%")
         print("=" * 60 + "\n")
