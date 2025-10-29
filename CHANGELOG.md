@@ -84,7 +84,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **CI/CD Enhancements**
-  - Integrated test coverage reporting with Codecov
   - Automated coverage reports on every PR and push to main
   - Dependabot configuration for automated dependency updates
     - GitHub Actions monitoring (weekly)
@@ -101,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI Workflow**
   - CI now runs full test suite with coverage reporting
   - Test dependencies are installed during CI runs
-  - Coverage XML reports are uploaded to Codecov
+  - Coverage reports are generated in XML and HTML formats
 
 ### Planned
 
@@ -112,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional test coverage
 
 ---
+
 ## Version History
 
 ### Versioning Scheme
