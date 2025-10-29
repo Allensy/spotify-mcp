@@ -22,16 +22,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -e .
 
       - name: Import smoke test
         run: |
-          python - << 'PY'
-          import importlib
-          import sys
-          for mod in ("spotify_tools",):
-              importlib.import_module(mod)
-          print("Imports OK")
-          PY
+          python -c "import spotify_mcp.server; import spotify_mcp.tools; import spotify_mcp.config; print('✓ All imports OK')"
 
       - name: Build Docker image
         run: |
