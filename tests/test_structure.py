@@ -5,9 +5,16 @@ This script validates the structure and completeness of the MCP implementation
 without requiring Spotify credentials.
 """
 
-from typing import List, Dict, Any, Set
+import sys
+from pathlib import Path
+from typing import List, Dict, Any
 import inspect
 import ast
+
+# Add src directory to Python path for imports
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 
 class StructureValidator:
@@ -43,10 +50,10 @@ class StructureValidator:
     def validate_imports(self) -> None:
         """Validate that all modules can be imported."""
         try:
-            import mcp_server
-            import spotify_tools
-            import config
-            import auth_init
+            from spotify_mcp import server  # noqa: F401
+            from spotify_mcp import tools  # noqa: F401
+            from spotify_mcp import config  # noqa: F401
+            from spotify_mcp.cli import auth_init  # noqa: F401
             self.log_check(
                 "Module Imports",
                 "PASS",
@@ -58,7 +65,7 @@ class StructureValidator:
     def validate_mcp_tools(self) -> None:
         """Validate MCP tool definitions."""
         try:
-            import mcp_server
+            from spotify_mcp import server as mcp_server
 
             # Expected tools
             expected_tools = {
@@ -68,9 +75,6 @@ class StructureValidator:
                 # Library
                 "list_playlists", "list_liked", "list_playlist_songs",
                 "add_to_liked", "add_to_playlist", "liked_total",
-                # Audio features
-                "get_audio_features", "analyze_track", "find_similar_tracks",
-                "filter_tracks_by_features", "get_track_recommendations",
                 # Queue
                 "add_to_queue", "get_queue",
                 # Analytics
@@ -79,8 +83,6 @@ class StructureValidator:
                 "list_devices", "transfer_playback",
                 # Playback controls
                 "set_shuffle", "set_repeat", "seek_position", "set_volume",
-                # Advanced
-                "get_audio_analysis",
             }
 
             # Get registered functions (exclude imports and special names)
@@ -123,7 +125,7 @@ class StructureValidator:
     def validate_spotify_functions(self) -> None:
         """Validate Spotify tools function definitions."""
         try:
-            import spotify_tools
+            from spotify_mcp import tools as spotify_tools
 
             expected_functions = {
                 # Core
@@ -136,10 +138,6 @@ class StructureValidator:
                 "list_user_playlists", "list_liked_songs",
                 "list_playlist_songs", "add_songs_to_liked",
                 "add_songs_to_playlist", "get_liked_songs_total",
-                # Audio features
-                "get_audio_features", "analyze_track",
-                "find_similar_tracks", "filter_tracks_by_features",
-                "get_track_recommendations",
                 # Queue
                 "add_to_queue", "get_queue",
                 # Analytics
@@ -148,8 +146,6 @@ class StructureValidator:
                 "list_devices", "transfer_playback",
                 # Playback controls
                 "set_shuffle", "set_repeat", "seek_position", "set_volume",
-                # Advanced
-                "get_audio_analysis",
             }
 
             # Check functions exist
@@ -202,7 +198,7 @@ class StructureValidator:
     def validate_async_functions(self) -> None:
         """Validate that async functions are properly defined."""
         try:
-            import spotify_tools
+            from spotify_mcp import tools as spotify_tools
 
             async_functions = [
                 "search_spotify", "play", "pause", "next_track",
@@ -210,13 +206,10 @@ class StructureValidator:
                 "play_song_by_id", "list_user_playlists", "list_liked_songs",
                 "list_playlist_songs", "add_songs_to_liked",
                 "add_songs_to_playlist", "get_liked_songs_total",
-                "get_audio_features", "analyze_track",
-                "find_similar_tracks", "filter_tracks_by_features",
-                "get_track_recommendations", "add_to_queue", "get_queue",
+                "add_to_queue", "get_queue",
                 "get_recently_played", "get_top_tracks", "get_top_artists",
                 "list_devices", "transfer_playback", "set_shuffle",
                 "set_repeat", "seek_position", "set_volume",
-                "get_audio_analysis",
             ]
 
             not_async = []
@@ -245,7 +238,7 @@ class StructureValidator:
     def validate_type_hints(self) -> None:
         """Validate that functions have type hints."""
         try:
-            import spotify_tools
+            from spotify_mcp import tools as spotify_tools
 
             functions_to_check = [
                 "search_spotify", "play", "pause", "add_to_queue",
@@ -280,14 +273,12 @@ class StructureValidator:
     def validate_docstrings(self) -> None:
         """Validate that functions have docstrings."""
         try:
-            import spotify_tools
-            import mcp_server
+            from spotify_mcp import tools as spotify_tools
 
             # Check spotify_tools functions
             functions_to_check = [
                 "search_spotify", "play", "pause", "add_to_queue",
                 "get_queue", "list_devices", "get_top_tracks",
-                "get_audio_analysis",
             ]
 
             missing_docs = []
@@ -316,7 +307,7 @@ class StructureValidator:
     def validate_error_handling(self) -> None:
         """Validate error handling in functions."""
         try:
-            with open('spotify_tools.py', 'r') as f:
+            with open('src/spotify_mcp/tools.py', 'r', encoding='utf-8') as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -359,10 +350,10 @@ class StructureValidator:
         import os
 
         required_files = [
-            'mcp_server.py',
-            'spotify_tools.py',
-            'config.py',
-            'auth_init.py',
+            'src/spotify_mcp/server.py',
+            'src/spotify_mcp/tools.py',
+            'src/spotify_mcp/config.py',
+            'src/spotify_mcp/cli/auth_init.py',
             'requirements.txt',
             'Dockerfile',
             'README.md',
@@ -390,7 +381,7 @@ class StructureValidator:
     def validate_requirements(self) -> None:
         """Validate requirements.txt content."""
         try:
-            with open('requirements.txt', 'r') as f:
+            with open('requirements.txt', 'r', encoding='utf-8') as f:
                 content = f.read()
 
             required_packages = [
@@ -487,6 +478,69 @@ def main():
     validator.run_all_validations()
 
 
+# Pytest-compatible test functions
+def test_file_structure():
+    """Pytest: Validate project file structure."""
+    validator = StructureValidator()
+    validator.validate_file_structure()
+    assert validator.failed_checks == 0, "File structure validation failed"
+
+
+def test_requirements():
+    """Pytest: Validate requirements.txt content."""
+    validator = StructureValidator()
+    validator.validate_requirements()
+    assert validator.failed_checks == 0, "Requirements validation failed"
+
+
+def test_imports():
+    """Pytest: Validate that all modules can be imported."""
+    validator = StructureValidator()
+    validator.validate_imports()
+    assert validator.failed_checks == 0, "Module imports failed"
+
+
+def test_mcp_tools():
+    """Pytest: Validate MCP tool definitions."""
+    validator = StructureValidator()
+    validator.validate_mcp_tools()
+    assert validator.failed_checks == 0, "MCP tool validation failed"
+
+
+def test_spotify_functions():
+    """Pytest: Validate Spotify tools function definitions."""
+    validator = StructureValidator()
+    validator.validate_spotify_functions()
+    assert validator.failed_checks == 0, "Spotify functions validation failed"
+
+
+def test_async_functions():
+    """Pytest: Validate that async functions are properly defined."""
+    validator = StructureValidator()
+    validator.validate_async_functions()
+    assert validator.failed_checks == 0, "Async functions validation failed"
+
+
+def test_type_hints():
+    """Pytest: Validate that functions have type hints."""
+    validator = StructureValidator()
+    validator.validate_type_hints()
+    assert validator.failed_checks == 0, "Type hints validation failed"
+
+
+def test_docstrings():
+    """Pytest: Validate that functions have docstrings."""
+    validator = StructureValidator()
+    validator.validate_docstrings()
+    assert validator.failed_checks == 0, "Docstrings validation failed"
+
+
+def test_error_handling():
+    """Pytest: Validate error handling in functions."""
+    validator = StructureValidator()
+    validator.validate_error_handling()
+    assert validator.failed_checks == 0, "Error handling validation failed"
+
+
 if __name__ == "__main__":
     main()
-

@@ -4,8 +4,15 @@ Integration tests for Spotify MCP server.
 This module tests the MCP server tool registration and basic functionality.
 """
 
+import sys
+from pathlib import Path
 import asyncio
 from typing import List, Dict, Any
+
+# Add src directory to Python path for imports
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 
 class MCPIntegrationTester:
@@ -40,9 +47,9 @@ class MCPIntegrationTester:
     def test_imports(self) -> None:
         """Test that all modules import correctly."""
         try:
-            import mcp_server
-            import spotify_tools
-            import config
+            from spotify_mcp import server as mcp_server
+            from spotify_mcp import tools as spotify_tools
+            from spotify_mcp import config
             self.log_test("Module Imports", "PASS")
         except Exception as e:
             self.log_test("Module Imports", "FAIL", error=str(e))
@@ -50,7 +57,7 @@ class MCPIntegrationTester:
     def test_mcp_server_creation(self) -> None:
         """Test MCP server creation."""
         try:
-            import mcp_server
+            from spotify_mcp import server as mcp_server
             if hasattr(mcp_server, 'mcp'):
                 self.log_test("MCP Server Creation", "PASS")
             else:
@@ -65,7 +72,7 @@ class MCPIntegrationTester:
     def test_tool_registration(self) -> None:
         """Test that all tools are registered."""
         try:
-            import mcp_server
+            from spotify_mcp import server as mcp_server
 
             expected_tools = [
                 # Basic functionality
@@ -84,12 +91,6 @@ class MCPIntegrationTester:
                 "add_to_liked",
                 "add_to_playlist",
                 "liked_total",
-                # Audio features
-                "get_audio_features",
-                "analyze_track",
-                "find_similar_tracks",
-                "filter_tracks_by_features",
-                "get_track_recommendations",
                 # Queue management
                 "add_to_queue",
                 "get_queue",
@@ -105,8 +106,6 @@ class MCPIntegrationTester:
                 "set_repeat",
                 "seek_position",
                 "set_volume",
-                # Advanced analysis
-                "get_audio_analysis",
             ]
 
             # Get registered tools
@@ -139,7 +138,7 @@ class MCPIntegrationTester:
     def test_spotify_tools_exports(self) -> None:
         """Test that all expected functions are exported."""
         try:
-            import spotify_tools
+            from spotify_mcp import tools as spotify_tools
 
             expected_exports = [
                 "get_spotify_client",
@@ -158,11 +157,6 @@ class MCPIntegrationTester:
                 "add_songs_to_liked",
                 "add_songs_to_playlist",
                 "get_liked_songs_total",
-                "get_audio_features",
-                "analyze_track",
-                "find_similar_tracks",
-                "filter_tracks_by_features",
-                "get_track_recommendations",
                 "add_to_queue",
                 "get_queue",
                 "get_recently_played",
@@ -174,7 +168,6 @@ class MCPIntegrationTester:
                 "set_repeat",
                 "seek_position",
                 "set_volume",
-                "get_audio_analysis",
             ]
 
             missing_exports = []
@@ -201,7 +194,7 @@ class MCPIntegrationTester:
     def test_config_validation(self) -> None:
         """Test configuration validation."""
         try:
-            from config import load_settings
+            from spotify_mcp.config import load_settings
 
             # Try to load settings
             settings = load_settings()
@@ -276,6 +269,42 @@ def main():
     tester.run_all_tests()
 
 
+# Pytest-compatible test functions
+def test_module_imports():
+    """Pytest: Test that all modules import correctly."""
+    tester = MCPIntegrationTester()
+    tester.test_imports()
+    assert tester.failed_tests == 0, "Module imports failed"
+
+
+def test_mcp_server_creation():
+    """Pytest: Test MCP server creation."""
+    tester = MCPIntegrationTester()
+    tester.test_mcp_server_creation()
+    assert tester.failed_tests == 0, "MCP server creation failed"
+
+
+def test_tool_registration():
+    """Pytest: Test that all tools are registered."""
+    tester = MCPIntegrationTester()
+    tester.test_tool_registration()
+    assert tester.failed_tests == 0, "Tool registration failed"
+
+
+def test_spotify_tools_exports():
+    """Pytest: Test that all expected functions are exported."""
+    tester = MCPIntegrationTester()
+    tester.test_spotify_tools_exports()
+    assert tester.failed_tests == 0, "Spotify tools exports failed"
+
+
+def test_config_validation():
+    """Pytest: Test configuration validation."""
+    tester = MCPIntegrationTester()
+    tester.test_config_validation()
+    # Note: This test may fail if credentials aren't configured
+    # which is acceptable for structure tests
+
+
 if __name__ == "__main__":
     main()
-

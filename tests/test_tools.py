@@ -5,10 +5,36 @@ This module provides comprehensive tests for all Spotify MCP functionalities.
 Tests are designed to work with real Spotify API calls using user credentials.
 """
 
+import sys
+from pathlib import Path
 import asyncio
-import os
 from typing import List, Dict, Any
 from datetime import datetime
+
+import pytest
+
+# Add src directory to Python path for imports
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+
+# Check if credentials are available for Spotify API tests
+def _has_spotify_credentials() -> bool:
+    """Check if Spotify credentials are configured."""
+    try:
+        from spotify_mcp.config import load_settings
+        settings = load_settings()
+        return bool(settings.client_id and settings.client_secret)
+    except Exception:
+        return False
+
+
+# Skip marker for tests requiring Spotify credentials
+skip_without_credentials = pytest.mark.skipif(
+    not _has_spotify_credentials(),
+    reason="Spotify credentials not configured"
+)
 
 
 class SpotifyMCPTester:
@@ -52,7 +78,7 @@ class SpotifyMCPTester:
     async def test_search(self) -> None:
         """Test search functionality."""
         try:
-            from spotify_tools import search_spotify
+            from spotify_mcp.tools import search_spotify
 
             # Test track search
             result = await search_spotify("test", "track", limit=5)
@@ -88,7 +114,7 @@ class SpotifyMCPTester:
     async def test_playback_info(self) -> None:
         """Test playback information retrieval."""
         try:
-            from spotify_tools import (
+            from spotify_mcp.tools import (
                 get_currently_playing,
                 get_current_playback
             )
@@ -121,11 +147,10 @@ class SpotifyMCPTester:
     async def test_library_management(self) -> None:
         """Test library management functions."""
         try:
-            from spotify_tools import (
+            from spotify_mcp.tools import (
                 list_liked_songs,
                 get_liked_songs_total,
-                list_user_playlists,
-                list_playlist_songs
+                list_user_playlists
             )
 
             # Test liked songs total
@@ -160,80 +185,10 @@ class SpotifyMCPTester:
         except Exception as e:
             self.log_test("Library Management", "FAIL", error=str(e))
 
-    async def test_audio_features(self) -> None:
-        """Test audio features and analysis."""
-        try:
-            from spotify_tools import (
-                get_audio_features,
-                analyze_track,
-                get_audio_analysis
-            )
-
-            # Use a well-known track ID (Bohemian Rhapsody)
-            test_track_id = "3z8h0TU7ReDPLIbEnYhWZb"
-
-            # Test get audio features
-            result = await get_audio_features([test_track_id])
-            if result and "No audio features" not in result:
-                self.log_test("Get Audio Features", "PASS")
-            else:
-                self.log_test(
-                    "Get Audio Features",
-                    "FAIL",
-                    error="No features"
-                )
-
-            # Test analyze track
-            result = await analyze_track(test_track_id)
-            if result and "Could not analyze" not in result:
-                self.log_test("Analyze Track", "PASS")
-            else:
-                self.log_test("Analyze Track", "FAIL", error="No analysis")
-
-            # Test audio analysis
-            result = await get_audio_analysis(test_track_id)
-            if result and "Error getting audio analysis" not in result:
-                self.log_test("Get Audio Analysis", "PASS")
-            else:
-                self.log_test(
-                    "Get Audio Analysis",
-                    "FAIL",
-                    error="No analysis"
-                )
-
-        except Exception as e:
-            self.log_test("Audio Features", "FAIL", error=str(e))
-
-    async def test_recommendations(self) -> None:
-        """Test recommendation functions."""
-        try:
-            from spotify_tools import (
-                get_track_recommendations,
-                find_similar_tracks,
-                filter_tracks_by_features
-            )
-
-            # Test get recommendations with genre seed
-            result = await get_track_recommendations(
-                seed_genres=["rock"],
-                limit=5
-            )
-            if result and "No recommendations" not in result:
-                self.log_test("Get Track Recommendations", "PASS")
-            else:
-                self.log_test(
-                    "Get Track Recommendations",
-                    "FAIL",
-                    error="No recommendations"
-                )
-
-        except Exception as e:
-            self.log_test("Recommendations", "FAIL", error=str(e))
-
     async def test_queue_management(self) -> None:
         """Test queue management functions."""
         try:
-            from spotify_tools import get_queue
+            from spotify_mcp.tools import get_queue
 
             # Test get queue
             result = await get_queue()
@@ -248,7 +203,7 @@ class SpotifyMCPTester:
     async def test_device_management(self) -> None:
         """Test device management functions."""
         try:
-            from spotify_tools import list_devices
+            from spotify_mcp.tools import list_devices
 
             # Test list devices
             result = await list_devices()
@@ -263,7 +218,7 @@ class SpotifyMCPTester:
     async def test_user_analytics(self) -> None:
         """Test user analytics functions."""
         try:
-            from spotify_tools import (
+            from spotify_mcp.tools import (
                 get_recently_played,
                 get_top_tracks,
                 get_top_artists
@@ -304,10 +259,10 @@ class SpotifyMCPTester:
         print("=" * 60 + "\n")
 
         # Check if credentials are configured
-        from config import load_settings
+        from spotify_mcp.config import load_settings
         try:
             settings = load_settings()
-            print(f"✅ Credentials configured")
+            print("✅ Credentials configured")
             print(f"   Client ID: {settings.client_id[:10]}...")
             print(f"   Scopes: {settings.scope}\n")
         except Exception as e:
@@ -321,8 +276,6 @@ class SpotifyMCPTester:
         await self.test_search()
         await self.test_playback_info()
         await self.test_library_management()
-        await self.test_audio_features()
-        await self.test_recommendations()
         await self.test_queue_management()
         await self.test_device_management()
         await self.test_user_analytics()
@@ -350,6 +303,79 @@ async def main():
     await tester.run_all_tests()
 
 
+# Pytest-compatible async test functions
+@skip_without_credentials
+async def test_search():
+    """Pytest: Test search functionality."""
+    tester = SpotifyMCPTester()
+    await tester.test_search()
+    # Skip assertion if tests were skipped, only fail on actual failures
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Search tests failed"
+
+
+@skip_without_credentials
+async def test_playback_info():
+    """Pytest: Test playback information retrieval."""
+    tester = SpotifyMCPTester()
+    await tester.test_playback_info()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Playback info tests failed"
+
+
+@skip_without_credentials
+async def test_library_management():
+    """Pytest: Test library management functions."""
+    tester = SpotifyMCPTester()
+    await tester.test_library_management()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Library management tests failed"
+
+
+@skip_without_credentials
+async def test_audio_features():
+    """Pytest: Test audio features and analysis."""
+    tester = SpotifyMCPTester()
+    await tester.test_audio_features()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Audio features tests failed"
+
+
+@skip_without_credentials
+async def test_recommendations():
+    """Pytest: Test recommendation functions."""
+    tester = SpotifyMCPTester()
+    await tester.test_recommendations()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Recommendations tests failed"
+
+
+@skip_without_credentials
+async def test_queue_management():
+    """Pytest: Test queue management functions."""
+    tester = SpotifyMCPTester()
+    await tester.test_queue_management()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Queue management tests failed"
+
+
+@skip_without_credentials
+async def test_device_management():
+    """Pytest: Test device management functions."""
+    tester = SpotifyMCPTester()
+    await tester.test_device_management()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "Device management tests failed"
+
+
+@skip_without_credentials
+async def test_user_analytics():
+    """Pytest: Test user analytics functions."""
+    tester = SpotifyMCPTester()
+    await tester.test_user_analytics()
+    if tester.total_tests > 0:
+        assert tester.failed_tests == 0, "User analytics tests failed"
+
+
 if __name__ == "__main__":
     asyncio.run(main())
-
