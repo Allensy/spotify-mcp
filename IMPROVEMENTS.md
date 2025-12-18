@@ -19,8 +19,16 @@ The MCP tools were hanging indefinitely when called by the AI agent. Root causes
 - Added `open_browser=False` to SpotifyOAuth to prevent browser opening attempts in Docker
 - Check for cached token before initializing client
 - Raise informative `RuntimeError` if token is missing/invalid with clear instructions
-- Added `with_timeout()` decorator for async operations (15s timeout default)
-- Wrapped sync Spotify API calls to run in thread pool with timeout
+- Created `spotify_api_call()` helper function for universal timeout protection (15s default)
+- Applied timeout protection to **ALL 25 async Spotify API functions**:
+  - Playback controls: play, pause, next_track, previous_track, get_currently_playing
+  - Song playback: play_song, play_song_by_id, search_spotify
+  - Library management: list_user_playlists, list_liked_songs, list_playlist_songs, add_songs_to_liked, add_songs_to_playlist, get_liked_songs_total
+  - Queue operations: add_to_queue, get_queue  
+  - Analytics: get_recently_played, get_top_tracks, get_top_artists
+  - Device control: list_devices, transfer_playback
+  - Playback settings: set_shuffle, set_repeat, seek_position, set_volume
+- All Spotify API calls now run in thread pool with timeout via `asyncio.wait_for()` and `asyncio.to_thread()`
 
 **Benefits:**
 
@@ -68,6 +76,15 @@ Features:
 
 - Quick script to rebuild Docker image locally for testing
 - Shows usage examples
+
+#### 4. ✅ Fixed Container Lifecycle
+
+**File: `src/spotify_mcp/server.py`**
+
+- Changed exception handler in `main()` to use `os._exit(0)` instead of `sys.exit(0)`
+- Ensures forceful termination consistent with signal_handler and stdin_monitor
+- Prevents hanging from atexit handlers or cleanup code that could block sys.exit()
+- All three shutdown paths now use `os._exit()` for reliability
 
 ### How to Test the Fixes
 
@@ -180,9 +197,11 @@ Expected behavior:
 
 **Timeout Implementation:**
 
-- Uses `asyncio.to_thread()` to run sync Spotipy calls in thread pool
-- `asyncio.wait_for()` with 15s timeout
-- Catches `asyncio.TimeoutError` and converts to helpful RuntimeError
+- Created `spotify_api_call()` helper that wraps ANY Spotify API call
+- Uses `asyncio.to_thread()` to run sync Spotipy calls in thread pool  
+- `asyncio.wait_for()` with 15s timeout (configurable)
+- Catches `asyncio.TimeoutError` and converts to helpful RuntimeError with function name
+- Applied universally to ALL 25 async functions (100% coverage)
 
 **Auth Changes:**
 
@@ -208,9 +227,11 @@ Expected behavior:
 
 ### Files Changed
 
-- `src/spotify_mcp/tools.py` - Added error handling and timeouts
+- `src/spotify_mcp/tools.py` - Added comprehensive timeout protection to ALL 25 Spotify API functions
+- `src/spotify_mcp/server.py` - Fixed exception handler to use os._exit() for consistency
 - `src/spotify_mcp/cli/auth_init.py` - Added automatic browser OAuth flow
 - `README.md` - Updated documentation with new auth flow and troubleshooting
-- `build-local.sh` - NEW: Quick build script for testing
+- `scripts/build-local.sh` - NEW: Quick build script for testing
+- `IMPROVEMENTS.md` - THIS FILE: Accurately documents all changes
 
 No breaking changes - existing manual auth flow still works!
