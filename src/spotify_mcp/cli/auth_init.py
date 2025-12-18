@@ -15,6 +15,7 @@ Options:
 from __future__ import annotations
 
 import sys
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -29,12 +30,19 @@ class CallbackHandler(BaseHTTPRequestHandler):
     """HTTP handler for OAuth callback."""
 
     auth_code = None
+    server_instance = None  # Will be set to allow shutdown
 
     def do_GET(self):
-        """Handle the OAuth callback."""
+        """Handle the OAuth callback and other requests."""
         # Parse the query parameters
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
+
+        # Ignore favicon and other non-callback requests
+        if self.path.startswith("/favicon"):
+            self.send_response(404)
+            self.end_headers()
+            return
 
         if "code" in params:
             CallbackHandler.auth_code = params["code"][0]
@@ -52,6 +60,12 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 </html>
             """
             self.wfile.write(html_content.encode("utf-8"))
+
+            # Shutdown the server after successful auth
+            if CallbackHandler.server_instance:
+                threading.Thread(
+                    target=CallbackHandler.server_instance.shutdown
+                ).start()
         else:
             self.send_response(400)
             self.send_header("Content-type", "text/html; charset=utf-8")
@@ -99,7 +113,12 @@ def auto_auth(settings) -> bool:
 
     # Start local server
     server = HTTPServer(("127.0.0.1", port), CallbackHandler)
-    server_thread = threading.Thread(target=server.handle_request)
+    CallbackHandler.server_instance = (
+        server  # Allow handler to shutdown server
+    )
+
+    # Use serve_forever() to handle multiple requests (favicon, callback, etc.)
+    server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
 
@@ -119,6 +138,7 @@ def auto_auth(settings) -> bool:
         # Fall back to manual input
         try:
             redirect_response = input().strip()
+            server.shutdown()
             server.server_close()
 
             if redirect_response:
@@ -136,12 +156,22 @@ def auto_auth(settings) -> bool:
                 return False
         except KeyboardInterrupt:
             print("\n\n✗ Authorization cancelled by user")
+            server.shutdown()
             server.server_close()
             return False
     else:
         print("⏳ Waiting for authorization...")
-        server_thread.join(timeout=120)  # 2 minute timeout
+        # Wait for auth code or timeout
+        start_time = time.time()
+        while not CallbackHandler.auth_code and (
+            time.time() - start_time < 120
+        ):
+            time.sleep(0.5)
+
+        # Shutdown server
+        server.shutdown()
         server.server_close()
+        server_thread.join(timeout=5)
 
     if CallbackHandler.auth_code:
         print("✓ Authorization code received!")
