@@ -76,12 +76,15 @@ def spotify_auth_resource() -> str:
 ```bash
 docker run --rm -it \\
   -v ${{HOME}}/.cache/spotify-mcp:/app/.cache \\
-  -e SPOTIPY_CLIENT_ID={settings.client_id} \\
-  -e SPOTIPY_CLIENT_SECRET={settings.client_secret} \\
-  -e SPOTIPY_REDIRECT_URI={settings.redirect_uri} \\
-  -e SPOTIPY_CACHE_PATH={settings.cache_path or '/app/.cache/token'} \\
+  -e SPOTIPY_CLIENT_ID \\
+  -e SPOTIPY_CLIENT_SECRET \\
+  -e SPOTIPY_REDIRECT_URI \\
+  -e SPOTIPY_CACHE_PATH \\
   spotify-mcp-local:latest python -u -m spotify_mcp.cli.auth_init --auto
 ```
+
+**Note**: This assumes your MCP client is configured with these environment variables.
+They will be automatically passed through from your MCP client configuration.
 
 After completing authorization, restart Cursor to use Spotify tools.
 """
@@ -106,12 +109,15 @@ Run this command in your terminal:
 ```bash
 docker run --rm -it \\
   -v ${{HOME}}/.cache/spotify-mcp:/app/.cache \\
-  -e SPOTIPY_CLIENT_ID={settings.client_id} \\
-  -e SPOTIPY_CLIENT_SECRET={settings.client_secret} \\
-  -e SPOTIPY_REDIRECT_URI={settings.redirect_uri} \\
-  -e SPOTIPY_CACHE_PATH={settings.cache_path or '/app/.cache/token'} \\
+  -e SPOTIPY_CLIENT_ID \\
+  -e SPOTIPY_CLIENT_SECRET \\
+  -e SPOTIPY_REDIRECT_URI \\
+  -e SPOTIPY_CACHE_PATH \\
   spotify-mcp-local:latest python -u -m spotify_mcp.cli.auth_init --auto
 ```
+
+**Note**: The environment variables will be automatically passed through from your MCP client configuration.
+Do not manually substitute values - keep them as shown above.
 
 This will:
 1. Open your browser automatically to Spotify's authorization page
@@ -130,13 +136,14 @@ This will:
 - **Use the correct image name**: Use `spotify-mcp-local:latest` if built locally, or `docker.io/allesy/spotify-mcp:latest` for the published image
 - **Check your Spotify Developer App**: Your email must be added to User Management if the app is in Development Mode
 
-## Need Your Spotify Developer Credentials?
+## Need to Configure Your Spotify Developer Credentials?
 
 1. Go to: https://developer.spotify.com/dashboard
 2. Create or select your app
 3. Note your Client ID and Client Secret
 4. Add `http://127.0.0.1:8888/callback` to Redirect URIs
 5. Add your email to User Management (if in Development Mode)
+6. Add credentials to your MCP client configuration (never embed them in commands)
 """
 
 
