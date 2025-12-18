@@ -15,7 +15,10 @@ mcp = FastMCP("spotify-mcp")
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully."""
-    print(f"\nReceived signal {signum}, shutting down gracefully...", file=sys.stderr)
+    print(
+        f"\nReceived signal {signum}, shutting down gracefully...",
+        file=sys.stderr,
+    )
     # Use os._exit() instead of sys.exit() to bypass exception handlers
     # that might be preventing clean shutdown
     os._exit(0)
@@ -24,21 +27,24 @@ def signal_handler(signum, frame):
 def stdin_monitor():
     """Monitor stdin and exit if it closes (Docker disconnect)."""
     import time
+
     # Wait a bit before starting monitoring to let FastMCP initialize
     time.sleep(2)
-    
+
     try:
         while True:
             # Simple check: if stdin is closed, exit
             if sys.stdin.closed:
                 print("\nStdin closed, shutting down...", file=sys.stderr)
                 os._exit(0)
-            
+
             # Sleep between checks to avoid being too aggressive
             time.sleep(2)
     except Exception as e:
         # Any error means we should exit
-        print(f"\nStdin monitor error ({e}), shutting down...", file=sys.stderr)
+        print(
+            f"\nStdin monitor error ({e}), shutting down...", file=sys.stderr
+        )
         os._exit(0)
 
 
@@ -46,18 +52,19 @@ def stdin_monitor():
 def spotify_auth_resource() -> str:
     """Authorization setup instructions for Spotify MCP."""
     settings = load_settings()
-    
+
     # Generate a direct auth URL (though we can't complete it in Docker stdio mode)
     from spotipy.oauth2 import SpotifyOAuth
+
     auth_manager = SpotifyOAuth(
         client_id=settings.client_id,
         client_secret=settings.client_secret,
         redirect_uri=settings.redirect_uri,
         scope=settings.scope,
-        open_browser=False
+        open_browser=False,
     )
     auth_url = auth_manager.get_authorize_url()
-    
+
     return f"""# Spotify Authorization Required
 
 🔗 **Authorization URL**: {auth_url}
@@ -83,11 +90,11 @@ After completing authorization, restart Cursor to use Spotify tools.
 @mcp.prompt()
 def authorize_spotify() -> str:
     """Get instructions to authorize Spotify MCP server with your account.
-    
+
     Use this if you're getting 'No valid Spotify authentication token found' errors.
     """
     settings = load_settings()
-    
+
     return f"""# Spotify MCP Authorization Required
 
 You need to complete the OAuth flow to authorize this MCP server with your Spotify account.
@@ -351,15 +358,15 @@ def main() -> None:
     # Load settings early to validate required environment variables.
     # This keeps behavior consistent across Docker and local runs.
     load_settings()
-    
+
     # Register signal handlers for clean shutdown
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-    
+
     # Start stdin monitor thread to detect disconnects
     monitor_thread = threading.Thread(target=stdin_monitor, daemon=True)
     monitor_thread.start()
-    
+
     try:
         # Run the FastMCP server with stdio transport
         mcp.run("stdio")

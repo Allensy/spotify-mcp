@@ -47,11 +47,13 @@ def test_config():
 def test_env(test_config):
     """Set up test environment variables."""
     original_env = os.environ.copy()
-    os.environ.update({
-        "SPOTIPY_CLIENT_ID": test_config["client_id"],
-        "SPOTIPY_CLIENT_SECRET": test_config["client_secret"],
-        "SPOTIPY_REDIRECT_URI": test_config["redirect_uri"],
-    })
+    os.environ.update(
+        {
+            "SPOTIPY_CLIENT_ID": test_config["client_id"],
+            "SPOTIPY_CLIENT_SECRET": test_config["client_secret"],
+            "SPOTIPY_REDIRECT_URI": test_config["redirect_uri"],
+        }
+    )
     yield test_config
     os.environ.clear()
     os.environ.update(original_env)
@@ -72,10 +74,11 @@ def mock_spotify_oauth():
 def clean_imports():
     """Clean imports between tests to avoid caching issues."""
     import importlib
+
     modules_to_reload = [
-        'spotify_mcp.config',
-        'spotify_mcp.tools',
-        'spotify_mcp.server',
+        "spotify_mcp.config",
+        "spotify_mcp.tools",
+        "spotify_mcp.server",
     ]
     for module_name in modules_to_reload:
         if module_name in sys.modules:

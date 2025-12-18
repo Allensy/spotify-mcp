@@ -95,7 +95,7 @@ def get_spotify_client():
 
     Returns:
         spotipy.Spotify: An authenticated Spotipy client instance.
-        
+
     Raises:
         RuntimeError: If authentication fails or token cache is missing/invalid.
     """
@@ -112,7 +112,7 @@ def get_spotify_client():
 
     try:
         auth_manager = SpotifyOAuth(**auth_manager_kwargs)
-        
+
         # Check if we have a valid cached token
         token_info = auth_manager.get_cached_token()
         if not token_info:
@@ -121,7 +121,7 @@ def get_spotify_client():
                 "Please run the authorization flow first. "
                 "In Docker: docker run -it -v /path/to/cache:/app/.cache <image> python -m spotify_mcp.cli.auth_init"
             )
-        
+
         return spotipy.Spotify(auth_manager=auth_manager)
     except Exception as e:
         if "No valid Spotify authentication token found" in str(e):
@@ -135,6 +135,7 @@ def get_spotify_client():
 
 def with_timeout(timeout_seconds=10):
     """Decorator to add timeout to sync operations called from async context."""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -142,7 +143,7 @@ def with_timeout(timeout_seconds=10):
                 # Run the sync function in a thread pool with timeout
                 return await asyncio.wait_for(
                     asyncio.to_thread(func, *args, **kwargs),
-                    timeout=timeout_seconds
+                    timeout=timeout_seconds,
                 )
             except asyncio.TimeoutError:
                 raise RuntimeError(
@@ -150,7 +151,9 @@ def with_timeout(timeout_seconds=10):
                     "This may indicate network issues or authentication problems. "
                     "Please check your Spotify token and network connectivity."
                 )
+
         return wrapper
+
     return decorator
 
 
@@ -166,7 +169,9 @@ def get_current_playback():
 
 
 @with_timeout(timeout_seconds=15)
-def _search_spotify_sync(query: str, search_type: str, limit: int, offset: int) -> str:
+def _search_spotify_sync(
+    query: str, search_type: str, limit: int, offset: int
+) -> str:
     """Synchronous search implementation."""
     sp = get_spotify_client()
     results = sp.search(q=query, type=search_type, limit=limit, offset=offset)

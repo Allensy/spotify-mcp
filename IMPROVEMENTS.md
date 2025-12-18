@@ -3,7 +3,9 @@
 ## Changes Made to Fix Hanging Issues and Improve Auth
 
 ### Problem Identified
+
 The MCP tools were hanging indefinitely when called by the AI agent. Root causes:
+
 1. **Missing/invalid authentication tokens** - Spotipy tried to open a browser for OAuth in Docker stdio mode, causing infinite hang
 2. **No timeout handling** - Network/API calls could block forever
 3. **Poor error messages** - Users didn't know what went wrong
@@ -13,6 +15,7 @@ The MCP tools were hanging indefinitely when called by the AI agent. Root causes
 #### 1. ✅ Prevent Hanging with Better Error Handling
 
 **File: `src/spotify_mcp/tools.py`**
+
 - Added `open_browser=False` to SpotifyOAuth to prevent browser opening attempts in Docker
 - Check for cached token before initializing client
 - Raise informative `RuntimeError` if token is missing/invalid with clear instructions
@@ -20,6 +23,7 @@ The MCP tools were hanging indefinitely when called by the AI agent. Root causes
 - Wrapped sync Spotify API calls to run in thread pool with timeout
 
 **Benefits:**
+
 - Tools now **fail fast with clear error messages** instead of hanging
 - Users get actionable instructions on how to fix auth issues
 - Network/API issues timeout after 15s with helpful error message
@@ -31,11 +35,13 @@ The MCP tools were hanging indefinitely when called by the AI agent. Root causes
 Added **automatic browser-based OAuth flow** (similar to Atlassian MCP server):
 
 **New `--auto` flag:**
+
 ```bash
 python -m spotify_mcp.cli.auth_init --auto
 ```
 
 Features:
+
 - Automatically opens browser to Spotify auth page
 - Starts local HTTP server to catch OAuth callback
 - Shows success/failure page in browser
@@ -44,6 +50,7 @@ Features:
 **Manual flow still available** (omit `--auto` flag) for environments where browser opening doesn't work.
 
 **Benefits:**
+
 - Much better UX - no copy-pasting URLs
 - Works like professional OAuth flows
 - Clear success/failure feedback in browser
@@ -51,12 +58,14 @@ Features:
 #### 3. ✅ Updated Documentation
 
 **File: `README.md`**
+
 - Added automatic auth flow instructions with `--auto` flag
 - Improved troubleshooting section with new error messages
 - Added timeout error handling guidance
 - Clarified token cache path requirements
 
 **File: `scripts/build-local.sh`** (NEW)
+
 - Quick script to rebuild Docker image locally for testing
 - Shows usage examples
 
@@ -115,6 +124,7 @@ docker run --rm -it \
 ```
 
 Expected behavior:
+
 - Browser opens automatically to Spotify auth page
 - Click "Agree"
 - Browser shows success page
@@ -143,6 +153,7 @@ Expected behavior:
 ### Error Messages You'll See
 
 1. **Missing Token:**
+
    ```
    RuntimeError: No valid Spotify authentication token found. 
    Please run the authorization flow first. 
@@ -150,6 +161,7 @@ Expected behavior:
    ```
 
 2. **Timeout:**
+
    ```
    RuntimeError: Operation 'search_spotify' timed out after 15s. 
    This may indicate network issues or authentication problems. 
@@ -157,6 +169,7 @@ Expected behavior:
    ```
 
 3. **Auth Error:**
+
    ```
    RuntimeError: Failed to initialize Spotify client: <details>. 
    This usually means the token cache is missing or invalid. 
@@ -166,16 +179,19 @@ Expected behavior:
 ### Technical Details
 
 **Timeout Implementation:**
+
 - Uses `asyncio.to_thread()` to run sync Spotipy calls in thread pool
 - `asyncio.wait_for()` with 15s timeout
 - Catches `asyncio.TimeoutError` and converts to helpful RuntimeError
 
 **Auth Changes:**
+
 - `open_browser=False` prevents Spotipy's automatic browser opening
 - Token validation happens at client creation time
 - Clear error messages guide users to fix auth issues
 
 **Browser Flow:**
+
 - Local HTTP server on port 8888 (matches redirect URI)
 - Handles OAuth callback automatically
 - Shows HTML success/failure page
@@ -198,4 +214,3 @@ Expected behavior:
 - `build-local.sh` - NEW: Quick build script for testing
 
 No breaking changes - existing manual auth flow still works!
-
