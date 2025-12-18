@@ -143,6 +143,7 @@ def auto_auth(settings) -> bool:
             redirect_response = input().strip()
             server.shutdown()
             server.server_close()
+            server_thread.join(timeout=5)
 
             if redirect_response:
                 try:
@@ -161,6 +162,7 @@ def auto_auth(settings) -> bool:
             print("\n\n✗ Authorization cancelled by user")
             server.shutdown()
             server.server_close()
+            server_thread.join(timeout=5)
             return False
     else:
         print("⏳ Waiting for authorization...")
