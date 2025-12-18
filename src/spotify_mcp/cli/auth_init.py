@@ -61,11 +61,8 @@ class CallbackHandler(BaseHTTPRequestHandler):
             """
             self.wfile.write(html_content.encode("utf-8"))
 
-            # Shutdown the server after successful auth
-            if CallbackHandler.server_instance:
-                threading.Thread(
-                    target=CallbackHandler.server_instance.shutdown
-                ).start()
+            # Auth code is set, main thread will detect and shutdown server
+            # Do NOT call shutdown() here to avoid double-shutdown race condition
         else:
             self.send_response(400)
             self.send_header("Content-type", "text/html; charset=utf-8")
