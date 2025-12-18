@@ -106,44 +106,35 @@ class TestTimeoutHandling:
     """Test timeout mechanisms to prevent hanging."""
 
     @pytest.mark.asyncio
-    async def test_timeout_decorator_exists(self):
-        """Test that with_timeout decorator is defined."""
-        from spotify_mcp.tools import with_timeout
+    async def test_spotify_api_call_function_exists(self):
+        """Test that spotify_api_call helper function is defined."""
+        from spotify_mcp.tools import spotify_api_call
 
-        assert callable(with_timeout)
-
-        # Test that it returns a decorator
-        decorator = with_timeout(timeout_seconds=1)
-        assert callable(decorator)
+        assert callable(spotify_api_call)
 
     @pytest.mark.asyncio
-    async def test_search_uses_timeout_wrapper(self):
-        """Test that search operations use timeout wrapper."""
+    async def test_search_uses_spotify_api_call(self):
+        """Test that search operations use spotify_api_call for timeout protection."""
         import inspect
-        from spotify_mcp import tools
+        from spotify_mcp.tools import search_spotify
 
-        # Check that _search_spotify_sync function exists
-        assert hasattr(tools, "_search_spotify_sync")
-
-        # Verify it's decorated with timeout
-        func = getattr(tools, "_search_spotify_sync")
-        # The with_timeout decorator should wrap it
-        assert hasattr(func, "__wrapped__") or callable(func)
+        # Check that search_spotify uses await spotify_api_call in its source
+        source = inspect.getsource(search_spotify)
+        assert "spotify_api_call" in source
+        assert "await" in source
 
     @pytest.mark.asyncio
     async def test_timeout_error_message(self):
         """Test that timeout produces helpful error message."""
-        from spotify_mcp.tools import with_timeout
+        from spotify_mcp.tools import spotify_api_call
+        import time
 
-        @with_timeout(timeout_seconds=0.1)
         def slow_function():
-            import time
-
             time.sleep(1)
             return "success"
 
         with pytest.raises(RuntimeError) as exc_info:
-            await slow_function()
+            await spotify_api_call(slow_function, timeout_seconds=0.1)
 
         error_msg = str(exc_info.value)
         assert "timed out" in error_msg.lower()
