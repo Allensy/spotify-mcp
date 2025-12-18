@@ -91,6 +91,9 @@ def auto_auth(settings) -> bool:
     Returns:
         bool: True if successful, False otherwise.
     """
+    # Reset auth_code to avoid reusing stale codes from previous runs
+    CallbackHandler.auth_code = None
+
     print("🔐 Starting automatic browser-based authentication...")
     print(f"📍 Redirect URI: {settings.redirect_uri}")
 
@@ -198,6 +201,9 @@ def manual_auth(settings) -> bool:
     Returns:
         bool: True if successful, False otherwise.
     """
+    # Reset auth_code to avoid reusing stale codes from previous runs
+    CallbackHandler.auth_code = None
+
     auth_manager_kwargs = {
         "client_id": settings.client_id,
         "client_secret": settings.client_secret,
