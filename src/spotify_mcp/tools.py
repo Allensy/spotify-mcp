@@ -34,6 +34,8 @@ Functions:
 """
 
 from typing import List, Union
+import asyncio
+from functools import wraps
 
 import spotipy
 from dotenv import load_dotenv
@@ -93,6 +95,9 @@ def get_spotify_client():
 
     Returns:
         spotipy.Spotify: An authenticated Spotipy client instance.
+        
+    Raises:
+        RuntimeError: If authentication fails or token cache is missing/invalid.
     """
     settings = _get_settings()
     auth_manager_kwargs = {
@@ -100,11 +105,53 @@ def get_spotify_client():
         "client_secret": settings.client_secret,
         "redirect_uri": settings.redirect_uri,
         "scope": settings.scope,
+        "open_browser": False,  # Critical: prevent hanging in Docker/stdio mode
     }
     if settings.cache_path:
         auth_manager_kwargs["cache_path"] = settings.cache_path
 
-    return spotipy.Spotify(auth_manager=SpotifyOAuth(**auth_manager_kwargs))
+    try:
+        auth_manager = SpotifyOAuth(**auth_manager_kwargs)
+        
+        # Check if we have a valid cached token
+        token_info = auth_manager.get_cached_token()
+        if not token_info:
+            raise RuntimeError(
+                "No valid Spotify authentication token found. "
+                "Please run the authorization flow first. "
+                "In Docker: docker run -it -v /path/to/cache:/app/.cache <image> python -m spotify_mcp.cli.auth_init"
+            )
+        
+        return spotipy.Spotify(auth_manager=auth_manager)
+    except Exception as e:
+        if "No valid Spotify authentication token found" in str(e):
+            raise
+        raise RuntimeError(
+            f"Failed to initialize Spotify client: {str(e)}. "
+            "This usually means the token cache is missing or invalid. "
+            "Please complete the OAuth authorization flow."
+        ) from e
+
+
+def with_timeout(timeout_seconds=10):
+    """Decorator to add timeout to sync operations called from async context."""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                # Run the sync function in a thread pool with timeout
+                return await asyncio.wait_for(
+                    asyncio.to_thread(func, *args, **kwargs),
+                    timeout=timeout_seconds
+                )
+            except asyncio.TimeoutError:
+                raise RuntimeError(
+                    f"Operation '{func.__name__}' timed out after {timeout_seconds}s. "
+                    "This may indicate network issues or authentication problems. "
+                    "Please check your Spotify token and network connectivity."
+                )
+        return wrapper
+    return decorator
 
 
 def get_current_playback():
@@ -118,20 +165,9 @@ def get_current_playback():
     return sp.current_playback()
 
 
-async def search_spotify(
-    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
-) -> str:
-    """Search Spotify for tracks, albums, artists, or playlists.
-
-    Args:
-        query (str): The search query string.
-        search_type (str, optional): The type ('track'|'album'|'artist'|'playlist').
-        limit (int, optional): Max number of results. Defaults to 5.
-        offset (int, optional): Index of first item. Defaults to 0.
-
-    Returns:
-        str: A formatted string of results or a not-found message.
-    """
+@with_timeout(timeout_seconds=15)
+def _search_spotify_sync(query: str, search_type: str, limit: int, offset: int) -> str:
+    """Synchronous search implementation."""
     sp = get_spotify_client()
     results = sp.search(q=query, type=search_type, limit=limit, offset=offset)
     items = results.get(f"{search_type}s", {}).get("items", [])
@@ -154,6 +190,23 @@ async def search_spotify(
             owner = item["owner"]["display_name"]
             formatted.append(f"{item['name']} by {owner} [ID: {item['id']}]")
     return "\n".join(formatted)
+
+
+async def search_spotify(
+    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
+) -> str:
+    """Search Spotify for tracks, albums, artists, or playlists.
+
+    Args:
+        query (str): The search query string.
+        search_type (str, optional): The type ('track'|'album'|'artist'|'playlist').
+        limit (int, optional): Max number of results. Defaults to 5.
+        offset (int, optional): Index of first item. Defaults to 0.
+
+    Returns:
+        str: A formatted string of results or a not-found message.
+    """
+    return await _search_spotify_sync(query, search_type, limit, offset)
 
 
 async def play() -> str:
