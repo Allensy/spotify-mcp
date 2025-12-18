@@ -133,28 +133,40 @@ def get_spotify_client():
         ) from e
 
 
-def with_timeout(timeout_seconds=10):
-    """Decorator to add timeout to sync operations called from async context."""
+async def spotify_api_call(func, *args, timeout_seconds=15, **kwargs):
+    """Execute any Spotify API call with timeout protection.
 
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                # Run the sync function in a thread pool with timeout
-                return await asyncio.wait_for(
-                    asyncio.to_thread(func, *args, **kwargs),
-                    timeout=timeout_seconds,
-                )
-            except asyncio.TimeoutError:
-                raise RuntimeError(
-                    f"Operation '{func.__name__}' timed out after {timeout_seconds}s. "
-                    "This may indicate network issues or authentication problems. "
-                    "Please check your Spotify token and network connectivity."
-                )
+    This wrapper ensures ALL Spotify API calls are protected from hanging
+    indefinitely due to network issues or authentication problems.
 
-        return wrapper
+    Args:
+        func: The Spotify API method to call (e.g., sp.start_playback)
+        *args: Positional arguments to pass to the function
+        timeout_seconds: Timeout in seconds (default: 15)
+        **kwargs: Keyword arguments to pass to the function
 
-    return decorator
+    Returns:
+        The result of the Spotify API call
+
+    Raises:
+        RuntimeError: If the call times out or fails
+    """
+    try:
+        # Run the sync Spotify API call in a thread pool with timeout
+        return await asyncio.wait_for(
+            asyncio.to_thread(func, *args, **kwargs),
+            timeout=timeout_seconds,
+        )
+    except asyncio.TimeoutError:
+        func_name = getattr(func, "__name__", str(func))
+        raise RuntimeError(
+            f"Spotify API call '{func_name}' timed out after {timeout_seconds}s. "
+            "This may indicate network issues or authentication problems. "
+            "Please check your Spotify token and network connectivity."
+        )
+    except Exception as e:
+        # Preserve original exception type and message for debugging
+        raise
 
 
 def get_current_playback():
@@ -168,13 +180,24 @@ def get_current_playback():
     return sp.current_playback()
 
 
-@with_timeout(timeout_seconds=15)
-def _search_spotify_sync(
-    query: str, search_type: str, limit: int, offset: int
+async def search_spotify(
+    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
 ) -> str:
-    """Synchronous search implementation."""
+    """Search Spotify for tracks, albums, artists, or playlists.
+
+    Args:
+        query (str): The search query string.
+        search_type (str, optional): The type ('track'|'album'|'artist'|'playlist').
+        limit (int, optional): Max number of results. Defaults to 5.
+        offset (int, optional): Index of first item. Defaults to 0.
+
+    Returns:
+        str: A formatted string of results or a not-found message.
+    """
     sp = get_spotify_client()
-    results = sp.search(q=query, type=search_type, limit=limit, offset=offset)
+    results = await spotify_api_call(
+        sp.search, q=query, type=search_type, limit=limit, offset=offset
+    )
     items = results.get(f"{search_type}s", {}).get("items", [])
     if not items:
         return f"No {search_type}s found for '{query}'."
@@ -197,23 +220,6 @@ def _search_spotify_sync(
     return "\n".join(formatted)
 
 
-async def search_spotify(
-    query: str, search_type: str = "track", limit: int = 5, offset: int = 0
-) -> str:
-    """Search Spotify for tracks, albums, artists, or playlists.
-
-    Args:
-        query (str): The search query string.
-        search_type (str, optional): The type ('track'|'album'|'artist'|'playlist').
-        limit (int, optional): Max number of results. Defaults to 5.
-        offset (int, optional): Index of first item. Defaults to 0.
-
-    Returns:
-        str: A formatted string of results or a not-found message.
-    """
-    return await _search_spotify_sync(query, search_type, limit, offset)
-
-
 async def play() -> str:
     """Start playback on the user's active Spotify device.
 
@@ -222,7 +228,7 @@ async def play() -> str:
     """
     sp = get_spotify_client()
     try:
-        sp.start_playback()
+        await spotify_api_call(sp.start_playback)
         return "Playback started."
     except Exception as e:
         return f"Error starting playback: {e}"
@@ -236,7 +242,7 @@ async def pause() -> str:
     """
     sp = get_spotify_client()
     try:
-        sp.pause_playback()
+        await spotify_api_call(sp.pause_playback)
         return "Playback paused."
     except Exception as e:
         return f"Error pausing playback: {e}"
@@ -250,7 +256,7 @@ async def next_track():
     """
     sp = get_spotify_client()
     try:
-        sp.next_track()
+        await spotify_api_call(sp.next_track)
         return "Skipped to next track."
     except Exception as e:
         return f"Error skipping to next track: {e}"
@@ -264,7 +270,7 @@ async def previous_track():
     """
     sp = get_spotify_client()
     try:
-        sp.previous_track()
+        await spotify_api_call(sp.previous_track)
         return "Went to previous track."
     except Exception as e:
         return f"Error going to previous track: {e}"
@@ -277,7 +283,7 @@ async def get_currently_playing():
         str: A formatted now-playing string, or a message if nothing is playing.
     """
     sp = get_spotify_client()
-    playback = sp.current_playback()
+    playback = await spotify_api_call(sp.current_playback)
     if playback and playback.get("item"):
         item = playback["item"]
         artists = ", ".join(artist["name"] for artist in item["artists"])
@@ -296,7 +302,9 @@ async def play_song(song_name: str):
         str: What was played or an error message.
     """
     sp = get_spotify_client()
-    results = sp.search(q=song_name, type="track", limit=1)
+    results = await spotify_api_call(
+        sp.search, q=song_name, type="track", limit=1
+    )
     tracks = results.get("tracks", {}).get("items", [])
     if not tracks:
         return f"No tracks found for '{song_name}'."
@@ -305,7 +313,7 @@ async def play_song(song_name: str):
     track_name = track["name"]
     artists = ", ".join(artist["name"] for artist in track["artists"])
     try:
-        sp.start_playback(uris=[track_uri])
+        await spotify_api_call(sp.start_playback, uris=[track_uri])
         return f"Now playing: {track_name} by {artists}."
     except Exception as e:
         return f"Error playing '{track_name}': {e}"
@@ -335,9 +343,9 @@ async def play_song_by_id(song_id: str):
             playlist_uri = song_id
         try:
             # Get playlist details for friendly name
-            playlist = sp.playlist(playlist_uri)
+            playlist = await spotify_api_call(sp.playlist, playlist_uri)
             playlist_name = playlist.get("name", "Playlist")
-            sp.start_playback(context_uri=playlist_uri)
+            await spotify_api_call(sp.start_playback, context_uri=playlist_uri)
             return f"Now playing playlist: {playlist_name}."
         except Exception as e:
             return f"Error playing playlist '{song_id}': {e}"
@@ -349,10 +357,10 @@ async def play_song_by_id(song_id: str):
         track_uri = song_id
     try:
         # Fetch track info for a friendly message
-        track = sp.track(track_uri)
+        track = await spotify_api_call(sp.track, track_uri)
         track_name = track["name"]
         artists = ", ".join(artist["name"] for artist in track["artists"])
-        sp.start_playback(uris=[track_uri])
+        await spotify_api_call(sp.start_playback, uris=[track_uri])
         return f"Now playing: {track_name} by {artists}."
     except Exception as e:
         return f"Error playing track '{song_id}': {e}"
@@ -370,7 +378,9 @@ async def list_user_playlists(limit: int = 20, offset: int = 0):
         str: A formatted string of playlist names and IDs.
     """
     sp = get_spotify_client()
-    playlists = sp.current_user_playlists(limit=limit, offset=offset)
+    playlists = await spotify_api_call(
+        sp.current_user_playlists, limit=limit, offset=offset
+    )
     items = playlists.get("items", [])
     if not items:
         return "No playlists found."
@@ -395,7 +405,9 @@ async def list_liked_songs(limit: int = 20, offset: int = 0):
         str: A formatted string of liked songs.
     """
     sp = get_spotify_client()
-    results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+    results = await spotify_api_call(
+        sp.current_user_saved_tracks, limit=limit, offset=offset
+    )
     items = results.get("items", [])
     if not items:
         return "No liked songs found."
@@ -427,7 +439,9 @@ async def list_playlist_songs(
     """
     sp = get_spotify_client()
     try:
-        results = sp.playlist_items(playlist_id, limit=limit, offset=offset)
+        results = await spotify_api_call(
+            sp.playlist_items, playlist_id, limit=limit, offset=offset
+        )
         items = results.get("items", [])
         if not items:
             return "No songs found in this playlist."
@@ -470,7 +484,7 @@ async def add_songs_to_liked(song_ids: Union[str, List[str]]):
             cleaned_ids.append(track)
 
     try:
-        sp.current_user_saved_tracks_add(cleaned_ids)
+        await spotify_api_call(sp.current_user_saved_tracks_add, cleaned_ids)
         return f"Added {len(cleaned_ids)} track(s) to your Liked Songs."
     except Exception as e:
         return f"Error adding track(s) to Liked Songs: {e}"
@@ -503,7 +517,7 @@ async def add_songs_to_playlist(
             uris.append(f"spotify:track:{track}")
 
     try:
-        sp.playlist_add_items(playlist_id, uris)
+        await spotify_api_call(sp.playlist_add_items, playlist_id, uris)
         return f"Added {len(uris)} track(s) to playlist {playlist_id}."
     except Exception as e:
         return f"Error adding track(s) to playlist {playlist_id}: {e}"
@@ -515,7 +529,8 @@ async def get_liked_songs_total() -> int:
     try:
         # Spotify returns the total count in the paging object;
         # limit=1 keeps the payload tiny.
-        return sp.current_user_saved_tracks(limit=1)["total"]
+        result = await spotify_api_call(sp.current_user_saved_tracks, limit=1)
+        return result["total"]
     except Exception as e:
         raise Exception(f"Error fetching liked songs total: {e}")
 
@@ -539,9 +554,9 @@ async def add_to_queue(track_id: str) -> str:
         clean_id = f"spotify:track:{track_id}"
 
     try:
-        sp.add_to_queue(clean_id)
+        await spotify_api_call(sp.add_to_queue, clean_id)
         # Get track info for friendly message
-        track = sp.track(clean_id.split(":")[-1])
+        track = await spotify_api_call(sp.track, clean_id.split(":")[-1])
         track_name = track["name"]
         artists = ", ".join(artist["name"] for artist in track["artists"])
         return f"Added '{track_name}' by {artists} to queue."
@@ -559,7 +574,7 @@ async def get_queue() -> str:
     sp = get_spotify_client()
 
     try:
-        queue_data = sp.queue()
+        queue_data = await spotify_api_call(sp.queue)
         queue_tracks = queue_data.get("queue", [])
 
         if not queue_tracks:
@@ -592,7 +607,9 @@ async def get_recently_played(limit: int = 20) -> str:
     sp = get_spotify_client()
 
     try:
-        results = sp.current_user_recently_played(limit=min(limit, 50))
+        results = await spotify_api_call(
+            sp.current_user_recently_played, limit=min(limit, 50)
+        )
         items = results.get("items", [])
 
         if not items:
@@ -631,8 +648,10 @@ async def get_top_tracks(
     sp = get_spotify_client()
 
     try:
-        results = sp.current_user_top_tracks(
-            limit=min(limit, 50), time_range=time_range
+        results = await spotify_api_call(
+            sp.current_user_top_tracks,
+            limit=min(limit, 50),
+            time_range=time_range,
         )
         items = results.get("items", [])
 
@@ -673,8 +692,10 @@ async def get_top_artists(
     sp = get_spotify_client()
 
     try:
-        results = sp.current_user_top_artists(
-            limit=min(limit, 50), time_range=time_range
+        results = await spotify_api_call(
+            sp.current_user_top_artists,
+            limit=min(limit, 50),
+            time_range=time_range,
         )
         items = results.get("items", [])
 
@@ -712,7 +733,7 @@ async def list_devices() -> str:
     sp = get_spotify_client()
 
     try:
-        devices = sp.devices()
+        devices = await spotify_api_call(sp.devices)
         device_list = devices.get("devices", [])
 
         if not device_list:
@@ -749,7 +770,7 @@ async def transfer_playback(device_id: str) -> str:
     sp = get_spotify_client()
 
     try:
-        sp.transfer_playback(device_id)
+        await spotify_api_call(sp.transfer_playback, device_id)
         return "Playback transferred to the selected device."
     except Exception as e:
         return f"Error transferring playback: {e}"
@@ -768,7 +789,7 @@ async def set_shuffle(state: bool) -> str:
     sp = get_spotify_client()
 
     try:
-        sp.shuffle(state)
+        await spotify_api_call(sp.shuffle, state)
         status = "enabled" if state else "disabled"
         return f"Shuffle mode {status}."
     except Exception as e:
@@ -788,7 +809,7 @@ async def set_repeat(state: str) -> str:
     sp = get_spotify_client()
 
     try:
-        sp.repeat(state)
+        await spotify_api_call(sp.repeat, state)
         return f"Repeat mode set to '{state}'."
     except Exception as e:
         return f"Error setting repeat mode: {e}"
@@ -807,7 +828,7 @@ async def seek_position(position_ms: int) -> str:
     sp = get_spotify_client()
 
     try:
-        sp.seek_track(position_ms)
+        await spotify_api_call(sp.seek_track, position_ms)
         minutes = position_ms // 60000
         seconds = (position_ms % 60000) // 1000
         return f"Seeked to {minutes}:{seconds:02d} in the current track."
@@ -828,7 +849,7 @@ async def set_volume(volume_percent: int) -> str:
     sp = get_spotify_client()
 
     try:
-        sp.volume(volume_percent)
+        await spotify_api_call(sp.volume, volume_percent)
         return f"Volume set to {volume_percent}%."
     except Exception as e:
         return f"Error setting volume: {e}"

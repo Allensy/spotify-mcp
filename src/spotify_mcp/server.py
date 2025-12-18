@@ -372,8 +372,9 @@ def main() -> None:
         mcp.run("stdio")
     except (KeyboardInterrupt, EOFError, BrokenPipeError):
         # Clean exit when stdio closes or interrupted
+        # Use os._exit() for forceful termination to prevent hanging
         print("\nShutting down MCP server...", file=sys.stderr)
-        sys.exit(0)
+        os._exit(0)
 
 
 if __name__ == "__main__":
