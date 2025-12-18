@@ -22,7 +22,28 @@ A Model Context Protocol (MCP) server that exposes Spotify controls and queries 
 
 ### 2. One-Time Authentication (Docker)
 
-Run this command to authenticate (replace with your credentials):
+#### 🚀 Automatic Browser Flow (Recommended)
+
+Run this command to authenticate with automatic browser opening:
+
+```bash
+docker run --rm -it \
+  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -e SPOTIPY_CLIENT_ID=your-client-id \
+  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
+  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
+  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init --auto
+```
+
+- Your browser will automatically open to Spotify's authorization page
+- Click "Agree" to authorize
+- You'll be redirected back automatically
+- Done! Token is saved.
+
+#### 📋 Manual Copy-Paste Flow (Alternative)
+
+If automatic browser opening doesn't work, omit the `--auto` flag:
 
 ```bash
 docker run --rm -it \
@@ -273,6 +294,14 @@ Your MCP client can also run `python -m spotify_mcp.server` directly instead of 
 
 ### Authentication Issues
 
+**"No valid Spotify authentication token found" Error**
+
+This means the MCP server can't find a cached OAuth token. You need to complete the authentication flow first:
+
+1. Run the auth initialization command (see "One-Time Authentication" section above)
+2. Make sure the volume mount path matches between auth and server commands
+3. Verify `SPOTIPY_CACHE_PATH` is consistent in both auth and MCP config
+
 **403 Forbidden Error**
 
 - ✅ Check that your Spotify account email is added to **User Management** in your Spotify Developer app (required for Development Mode)
@@ -288,6 +317,15 @@ Your MCP client can also run `python -m spotify_mcp.server` directly instead of 
   rm ~/.cache/spotify-mcp/token
   # Then run the auth_init command again
   ```
+
+**Timeout Errors**
+
+If operations timeout after 10-15 seconds:
+
+- Check your network connectivity
+- Verify Spotify API is accessible (not blocked by firewall/proxy)
+- Try refreshing your token (delete and re-authenticate)
+- Check that Spotify services are operational at [status.spotify.com](https://status.spotify.com)
 
 ### Docker Issues
 
@@ -312,6 +350,71 @@ Your MCP client can also run `python -m spotify_mcp.server` directly instead of 
 
 - Restart your MCP client after configuration changes
 - Check that the Spotify app server is running: look for it in your MCP client's server list
+
+## Testing
+
+The project includes comprehensive tests for all improvements:
+
+### Running Tests
+
+```bash
+# Run all tests
+./scripts/run-tests.sh
+
+# Run specific test categories
+pytest tests/test_error_handling.py -v  # Error handling & timeouts
+pytest tests/test_auth_flow.py -v       # OAuth authentication
+pytest tests/test_server.py -v          # MCP server integration
+pytest tests/test_tools.py -v           # Spotify API (needs credentials)
+pytest tests/test_structure.py -v       # Module structure
+```
+
+### Test Coverage
+
+- **Error Handling** (`test_error_handling.py`)
+  - ✅ Missing token error messages
+  - ✅ Timeout mechanisms (15s default)
+  - ✅ Signal handling for clean shutdown
+  - ✅ Configuration validation
+  - ✅ MCP server robustness
+
+- **Authentication Flow** (`test_auth_flow.py`)
+  - ✅ Automatic browser-based OAuth (`--auto` flag)
+  - ✅ Manual copy-paste fallback
+  - ✅ HTTP callback server handling
+  - ✅ Error handling and user feedback
+
+- **Server Integration** (`test_server.py`)
+  - ✅ Tool registration (25+ tools)
+  - ✅ MCP server creation
+  - ✅ Function exports
+
+- **Spotify Tools** (`test_tools.py`)
+  - ✅ Search functionality
+  - ✅ Playback controls
+  - ✅ Library management
+  - ✅ Queue operations
+  - ✅ Device management
+  - ✅ User analytics
+
+### CI/CD
+
+Tests run automatically on GitHub Actions:
+
+- ✅ Python 3.10, 3.11, 3.12
+- ✅ Structure and integration tests
+- ✅ Linting (black, ruff)
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Add tests for new features
+2. Run `./run-tests.sh` before submitting PRs
+3. Follow existing code style
+4. Update documentation
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 

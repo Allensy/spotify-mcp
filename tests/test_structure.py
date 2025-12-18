@@ -110,6 +110,16 @@ class StructureValidator:
                 "List",
                 "Optional",
                 "st",  # spotify_tools alias
+                # Helper functions and prompts (not MCP tools)
+                "signal_handler",
+                "stdin_monitor",
+                "authorize_spotify",  # MCP prompt
+                "spotify_auth_resource",  # MCP resource
+                "sys",
+                "signal",
+                "os",
+                "select",
+                "threading",
             }
             for name in dir(mcp_server):
                 obj = getattr(mcp_server, name)

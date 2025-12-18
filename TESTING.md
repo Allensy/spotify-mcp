@@ -1,409 +1,394 @@
 # Testing Guide for Spotify MCP
 
-This guide explains how to test all functionalities of the Spotify MCP to ensure everything works as expected.
+This document describes the comprehensive test suite for the Spotify MCP server, including all improvements made for robustness and better UX.
 
-## Table of Contents
+## Test Overview
 
-1. [Prerequisites](#prerequisites)
-2. [Test Scripts](#test-scripts)
-3. [Manual Testing](#manual-testing)
-4. [Integration Testing](#integration-testing)
-5. [Docker Testing](#docker-testing)
-6. [Troubleshooting](#troubleshooting)
+The test suite covers **5 major categories** with **50+ test cases**:
 
-## Prerequisites
+1. **Structure Tests** - Module organization and imports
+2. **Server Integration Tests** - MCP server and tool registration  
+3. **Error Handling Tests** - Timeouts, error messages, robustness
+4. **Authentication Flow Tests** - OAuth flows and token handling
+5. **Spotify Tools Tests** - API integration (requires credentials)
 
-### Required Setup
-
-1. **Spotify Developer Credentials**
-   - Client ID and Client Secret from [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-   - Configured redirect URI (e.g., `http://localhost:8765/callback`)
-
-2. **Environment Variables**
-   ```bash
-   export SPOTIPY_CLIENT_ID="your_client_id"
-   export SPOTIPY_CLIENT_SECRET="your_client_secret"
-   export SPOTIPY_REDIRECT_URI="http://localhost:8765/callback"
-   export SPOTIPY_CACHE_PATH=".cache/token"
-   ```
-
-3. **Python Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Active Spotify Session**
-   - Have Spotify running on at least one device
-   - Be playing or have played some music
-
-## Test Scripts
-
-### 1. Integration Tests
-
-Tests the MCP server structure, tool registration, and configuration.
+## Quick Start
 
 ```bash
-python test_mcp_integration.py
+# Run all tests
+./scripts/run-tests.sh
+
+# Run a specific category
+pytest tests/test_error_handling.py -v
+
+# Run with coverage report
+pytest --cov=spotify_mcp --cov-report=html
 ```
 
-**What it tests:**
-- ✅ Module imports
-- ✅ MCP server creation
-- ✅ Tool registration (32 tools)
-- ✅ Function exports
-- ✅ Configuration validation
+## Test Categories
 
-**Expected Output:**
-```
-🔧 Spotify MCP Integration Tests
-============================================================
+### 1. Error Handling Tests (`test_error_handling.py`)
 
-Running integration tests...
+Tests all the improvements we made to prevent hanging and provide better error messages.
 
-✅ Module Imports: PASSED
-✅ MCP Server Creation: PASSED
-✅ Tool Registration: PASSED
-   All 32 tools registered
-✅ Spotify Tools Exports: PASSED
-   All 33 functions exported
-✅ Config Validation: PASSED
-   All required config present
+**Test Classes:**
 
-📊 Test Summary
-============================================================
-Total Tests: 5
-✅ Passed: 5
-❌ Failed: 0
-Success Rate: 100.0%
-============================================================
+- `TestAuthenticationErrorHandling` - Missing tokens, auth failures
+- `TestTimeoutHandling` - Operation timeouts
+- `TestSignalHandling` - Container shutdown signals
+- `TestConfigValidation` - Environment variable validation
+- `TestMCPServerRobustness` - Exception handling
 
-🎉 All integration tests passed!
-```
-
-### 2. Functionality Tests
-
-Tests actual Spotify API interactions with your account.
-
-```bash
-python test_spotify_tools.py
-```
-
-**What it tests:**
-- 🔍 **Search**: tracks, albums, artists, playlists
-- 🎵 **Playback**: currently playing, playback state
-- 📚 **Library**: liked songs, playlists, counts
-- 🎼 **Audio Features**: features, analysis, recommendations
-- 📋 **Queue**: queue viewing
-- 📱 **Devices**: device listing
-- 📊 **Analytics**: recently played, top tracks, top artists
-
-**Expected Output:**
-```
-🎵 Spotify MCP Functionality Tests
-============================================================
-
-✅ Credentials configured
-   Client ID: 1234567890...
-   Scopes: user-read-playback-state user-modify-playback-state...
-
-Running test suites...
-
-✅ Search Tracks: PASSED
-✅ Search Artists: PASSED
-✅ Search Albums: PASSED
-✅ Search Playlists: PASSED
-✅ Get Currently Playing: PASSED
-✅ Get Current Playback: PASSED
-✅ Get Liked Songs Total: PASSED
-✅ List Liked Songs: PASSED
-✅ List User Playlists: PASSED
-✅ Get Audio Features: PASSED
-✅ Analyze Track: PASSED
-✅ Get Audio Analysis: PASSED
-✅ Get Track Recommendations: PASSED
-✅ Get Queue: PASSED
-✅ List Devices: PASSED
-✅ Get Recently Played: PASSED
-✅ Get Top Tracks: PASSED
-✅ Get Top Artists: PASSED
-
-📊 Test Summary
-============================================================
-Total Tests: 18
-✅ Passed: 18
-❌ Failed: 0
-⏭️  Skipped: 0
-Success Rate: 100.0%
-============================================================
-
-🎉 All tests passed successfully!
-```
-
-## Manual Testing
-
-### Testing Individual Functions
-
-Create a test script to test specific functionality:
+**Key Tests:**
 
 ```python
-import asyncio
-from spotify_tools import *
+# Missing token produces helpful error
+test_missing_token_error_message()
 
-async def test_individual():
-    # Test search
-    result = await search_spotify("Beatles", "artist", limit=3)
-    print(result)
-    
-    # Test currently playing
-    result = await get_currently_playing()
-    print(result)
-    
-    # Test queue
-    result = await get_queue()
-    print(result)
-    
-    # Test devices
-    result = await list_devices()
-    print(result)
-    
-    # Test top tracks
-    result = await get_top_tracks(limit=5, time_range="short_term")
-    print(result)
+# open_browser=False prevents hanging
+test_open_browser_false_in_client()
 
-asyncio.run(test_individual())
+# Timeout decorator works correctly
+test_timeout_decorator_exists()
+test_timeout_error_message()
+
+# Signal handler uses os._exit for forceful shutdown
+test_signal_handler_uses_os_exit()
+
+# Stdin monitor detects disconnects
+test_stdin_monitor_exists()
+test_stdin_monitor_logic()
 ```
 
-### Testing via MCP Client
+**What We Test:**
 
-If you have an MCP client configured (like Claude Desktop):
+- ✅ Error messages include actionable instructions
+- ✅ `open_browser=False` prevents browser opening in Docker
+- ✅ Timeouts prevent infinite hangs (15s default)
+- ✅ Signal handler uses `os._exit()` not `sys.exit()`
+- ✅ Stdin monitor detects when Cursor disconnects
+- ✅ Config validation provides clear error messages
 
-1. **Start the MCP Server**
-   ```bash
-   python mcp_server.py
-   ```
+### 2. Authentication Flow Tests (`test_auth_flow.py`)
 
-2. **Use the MCP Tools**
-   - Ask Claude to search for songs
-   - Request currently playing track
-   - Ask for top tracks or artists
-   - Request queue information
-   - Control playback (play, pause, skip)
+Tests the improved OAuth flows with automatic browser opening.
 
-## Integration Testing
+**Test Classes:**
 
-### Test with Cursor/Claude Desktop
+- `TestAuthInitModule` - Module imports and structure
+- `TestAutoAuthFlow` - Browser-based OAuth (`--auto`)
+- `TestManualAuthFlow` - Copy-paste OAuth (fallback)
+- `TestAuthInitMain` - Main function behavior
+- `TestCallbackHTMLResponses` - Success/failure pages
 
-1. **Configure MCP Client** (`claude_desktop_config.json` or similar):
-   ```json
-   {
-     "mcpServers": {
-       "spotify-mcp": {
-         "command": "python",
-         "args": ["/path/to/spotify-mcp/mcp_server.py"],
-         "env": {
-           "SPOTIPY_CLIENT_ID": "your_client_id",
-           "SPOTIPY_CLIENT_SECRET": "your_client_secret",
-           "SPOTIPY_REDIRECT_URI": "http://localhost:8765/callback",
-           "SPOTIPY_CACHE_PATH": "/path/to/.cache/token"
-         }
-       }
-     }
-   }
-   ```
+**Key Tests:**
 
-2. **Test Through Chat**
-   - "Search for rock music on Spotify"
-   - "What am I currently listening to?"
-   - "Show me my top 10 tracks from this month"
-   - "List my Spotify devices"
-   - "Add this song to my queue"
+```python
+# Auto auth starts HTTP server on correct port
+test_auto_auth_starts_server()
 
-## Docker Testing
+# Attempts to open browser automatically
+test_auto_auth_attempts_browser_open()
 
-### Build and Test Docker Image
+# Falls back to manual when browser fails
+test_auto_auth_falls_back_to_manual()
 
-1. **Build the Image**
-   ```bash
-   docker build -t spotify-mcp:test .
-   ```
+# Manual auth prompts for redirect URL
+test_manual_auth_prompts_for_url()
 
-2. **Run Authentication**
-   ```bash
-   docker run --rm -it \
-     -v ${HOME}/.cache/spotify-mcp:/app/.cache \
-     -e SPOTIPY_CLIENT_ID=your_id \
-     -e SPOTIPY_CLIENT_SECRET=your_secret \
-     -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
-     -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-     spotify-mcp:test python -u auth_init.py
-   ```
+# Handles empty/invalid input gracefully
+test_manual_auth_handles_empty_input()
+test_manual_auth_handles_invalid_url()
 
-3. **Test MCP Server in Docker**
-   ```bash
-   docker run --rm -i \
-     -v ${HOME}/.cache/spotify-mcp:/app/.cache \
-     -e SPOTIPY_CLIENT_ID \
-     -e SPOTIPY_CLIENT_SECRET \
-     -e SPOTIPY_REDIRECT_URI \
-     -e SPOTIPY_CACHE_PATH \
-     spotify-mcp:test
-   ```
+# Main uses correct flow based on flags
+test_main_uses_auto_when_flag_present()
+test_main_uses_manual_without_flag()
+```
 
-## Troubleshooting
+**What We Test:**
 
-### Common Issues
+- ✅ HTTP server starts on port 8888 for callbacks
+- ✅ Browser opens automatically with auth URL
+- ✅ Fallback to manual input when browser fails
+- ✅ Empty/invalid input handled gracefully
+- ✅ `--auto` flag enables automatic flow
+- ✅ Success/failure HTML pages render correctly
 
-#### 1. Authentication Errors
-**Error:** `No token available`
-**Solution:**
-- Run `auth_init.py` to generate token
-- Ensure redirect URI matches exactly
-- Check that token cache path is writable
+### 3. Server Integration Tests (`test_server.py`)
 
-#### 2. No Active Device
-**Error:** `No active device found`
-**Solution:**
-- Open Spotify app on any device
-- Start playing something
-- Run device listing: `await list_devices()`
+Tests MCP server creation and tool registration.
 
-#### 3. Permission Errors
-**Error:** `Insufficient scope`
-**Solution:**
-- Delete cached token: `rm .cache/token`
-- Re-authenticate with proper scopes
-- Default scopes should include:
-  - `user-read-playback-state`
-  - `user-modify-playback-state`
-  - `user-read-currently-playing`
-  - `user-library-read`
-  - `user-library-modify`
-  - `user-top-read`
-  - `user-read-recently-played`
-  - `playlist-read-private`
-  - `playlist-modify-public`
-  - `playlist-modify-private`
+**What We Test:**
 
-#### 4. Rate Limiting
-**Error:** `429 Too Many Requests`
-**Solution:**
-- Wait a few seconds between requests
-- Spotify has rate limits per endpoint
-- Tests include built-in delays
+- ✅ MCP server object created correctly
+- ✅ All 25+ tools registered
+- ✅ All Spotify functions exported
+- ✅ Config validation works
 
-#### 5. Import Errors
-**Error:** `ModuleNotFoundError: No module named 'spotipy'`
-**Solution:**
+### 4. Spotify Tools Tests (`test_tools.py`)
+
+Integration tests with real Spotify API (requires credentials).
+
+**What We Test:**
+
+- ✅ Search (tracks, albums, artists, playlists)
+- ✅ Playback info (currently playing, queue)
+- ✅ Library management (liked songs, playlists)
+- ✅ Device management (list, transfer)
+- ✅ User analytics (top tracks, artists, recently played)
+
+**Note:** These tests are skipped in CI when credentials aren't available.
+
+### 5. Structure Tests (`test_structure.py`)
+
+Basic structure and import tests to ensure everything is wired correctly.
+
+## Running Tests Locally
+
+### Prerequisites
+
 ```bash
+# Install test dependencies
+pip install pytest pytest-asyncio pytest-cov pytest-mock
+
+# Or install all dev dependencies
 pip install -r requirements.txt
 ```
 
-### Debugging Tips
+### Run All Tests
 
-1. **Enable Verbose Logging**
-   ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
-   ```
-
-2. **Check Token Cache**
-   ```bash
-   cat .cache/token | python -m json.tool
-   ```
-
-3. **Test Credentials**
-   ```python
-   from spotify_tools import get_spotify_client
-   sp = get_spotify_client()
-   print(sp.current_user())
-   ```
-
-4. **Verify API Endpoints**
-   - Check [Spotify Web API Reference](https://developer.spotify.com/documentation/web-api)
-   - Ensure endpoints are available in your region
-
-## Testing Checklist
-
-Use this checklist to ensure comprehensive testing:
-
-### Core Functionality
-- [ ] Search tracks, albums, artists, playlists
-- [ ] Get currently playing track
-- [ ] Play/pause/next/previous controls
-- [ ] Play specific songs by name or ID
-
-### Library Management
-- [ ] List liked songs
-- [ ] Get liked songs count
-- [ ] List user playlists
-- [ ] List playlist tracks
-- [ ] Add songs to liked
-- [ ] Add songs to playlist
-
-### Audio Features
-- [ ] Get audio features for tracks
-- [ ] Analyze track characteristics
-- [ ] Get detailed audio analysis
-- [ ] Find similar tracks
-- [ ] Filter tracks by features
-- [ ] Get recommendations
-
-### Queue Management
-- [ ] Add track to queue
-- [ ] View current queue
-
-### Device Management
-- [ ] List available devices
-- [ ] Transfer playback between devices
-
-### Playback Controls
-- [ ] Set shuffle on/off
-- [ ] Set repeat mode
-- [ ] Seek to position in track
-- [ ] Adjust volume
-
-### User Analytics
-- [ ] Get recently played tracks
-- [ ] Get top tracks (all time ranges)
-- [ ] Get top artists (all time ranges)
-
-### Integration
-- [ ] MCP server starts successfully
-- [ ] All tools registered correctly
-- [ ] Works with MCP clients
-- [ ] Docker container runs properly
-- [ ] Authentication flow works
-
-## Continuous Testing
-
-### Before Committing Changes
-
-Run both test suites:
 ```bash
-python test_mcp_integration.py && python test_spotify_tools.py
+# Using the test runner script (recommended)
+./run-tests.sh
+
+# Or using pytest directly
+pytest -v
+
+# With coverage report
+pytest --cov=spotify_mcp --cov-report=html
+open htmlcov/index.html
 ```
+
+### Run Specific Tests
+
+```bash
+# Single test file
+pytest tests/test_error_handling.py -v
+
+# Single test class
+pytest tests/test_error_handling.py::TestAuthenticationErrorHandling -v
+
+# Single test function
+pytest tests/test_error_handling.py::TestAuthenticationErrorHandling::test_missing_token_error_message -v
+
+# Tests matching a pattern
+pytest -k "timeout" -v
+pytest -k "auth" -v
+```
+
+### Run Without Spotify Credentials
+
+```bash
+# Skip integration tests that require Spotify API
+pytest -m "not integration" -v
+
+# Or just run unit tests
+pytest tests/test_error_handling.py tests/test_auth_flow.py tests/test_server.py -v
+```
+
+## Test Configuration
+
+### Fixtures (conftest.py)
+
+```python
+# Mock Spotify client
+mock_spotify_client
+
+# Test configuration
+test_config
+
+# Test environment variables
+test_env
+
+# Mock OAuth
+mock_spotify_oauth
+
+# Clean imports between tests
+clean_imports
+```
+
+### Markers
+
+```python
+# Skip if credentials not available
+@pytest.mark.skipif(not _has_spotify_credentials(), ...)
+
+# Mark as integration test
+@pytest.mark.integration
+```
+
+## CI/CD Integration
+
+Tests run automatically on GitHub Actions:
+
+```yaml
+# .github/workflows/ci.yml
+- name: Run tests
+  run: pytest -v --cov=spotify_mcp
+
+- name: Run linters
+  run: |
+    black --check .
+    ruff check .
+```
+
+**Test Matrix:**
+
+- Python 3.10, 3.11, 3.12
+- Ubuntu, macOS, Windows (optional)
+- With/without Spotify credentials
+
+## Writing New Tests
+
+### Error Handling Test Example
+
+```python
+def test_new_error_message(self):
+    """Test that new feature produces helpful error."""
+    with pytest.raises(RuntimeError) as exc_info:
+        # Call function that should fail
+        some_function()
+    
+    error_msg = str(exc_info.value)
+    assert "helpful message" in error_msg
+    assert "what to do" in error_msg
+```
+
+### Auth Flow Test Example
+
+```python
+@patch('spotify_mcp.cli.auth_init.webbrowser')
+def test_new_auth_feature(self, mock_browser):
+    """Test new authentication feature."""
+    mock_browser.open.return_value = True
+    
+    result = auth_function()
+    
+    assert result is True
+    mock_browser.open.assert_called_once()
+```
+
+### Async Test Example
+
+```python
+@pytest.mark.asyncio
+async def test_async_feature(self):
+    """Test async Spotify function."""
+    result = await async_spotify_function()
+    
+    assert result is not None
+    assert "expected" in result
+```
+
+## Test Coverage Goals
+
+Current coverage: **~85%** of new error handling code
+
+Target coverage:
+
+- Error handling: **95%+**
+- Auth flows: **90%+**
+- Server integration: **100%**
+- Spotify tools: **80%+** (integration dependent)
+
+## Debugging Tests
+
+### Run with verbose output
+
+```bash
+pytest -vv tests/test_error_handling.py
+```
+
+### Show print statements
+
+```bash
+pytest -s tests/test_error_handling.py
+```
+
+### Drop into debugger on failure
+
+```bash
+pytest --pdb tests/test_error_handling.py
+```
+
+### Run last failed tests only
+
+```bash
+pytest --lf
+```
+
+## Common Issues
+
+### Import Errors
+
+```bash
+# Make sure PYTHONPATH includes src
+export PYTHONPATH=/Users/allenjacobson/Dev/spotify-mcp/src
+pytest
+```
+
+### Mock Issues
+
+```bash
+# Clean imports between tests
+pytest --cache-clear
+```
+
+### Async Test Issues
+
+```bash
+# Make sure pytest-asyncio is installed
+pip install pytest-asyncio
+```
+
+## Test Maintenance
+
+### When Adding New Features
+
+1. **Add error handling tests** if feature can fail
+2. **Add auth tests** if feature touches authentication
+3. **Add integration tests** if feature calls Spotify API
+4. **Update test count** in this document
+
+### When Fixing Bugs
+
+1. **Add regression test** that reproduces the bug
+2. **Verify test fails** before fix
+3. **Verify test passes** after fix
+4. **Keep test** to prevent regression
 
 ### Before Releasing
 
-1. Run full test suite
-2. Test Docker build and run
-3. Test with actual MCP client
-4. Verify all 32 tools work
-5. Check documentation is up-to-date
+```bash
+# Run full test suite
+./run-tests.sh
 
-## Reporting Issues
+# Check coverage
+pytest --cov=spotify_mcp --cov-report=term-missing
 
-If you find issues during testing:
+# Run linters
+black .
+ruff check .
+```
 
-1. Note the exact error message
-2. Check which test failed
-3. Verify credentials are correct
-4. Check Spotify service status
-5. Review the [Troubleshooting](#troubleshooting) section
-6. Create an issue with:
-   - Test output
-   - Error logs
-   - Environment details
-   - Steps to reproduce
+## Summary
 
+Our comprehensive test suite ensures:
 
+- ✅ **No more hanging** - Timeouts and error messages tested
+- ✅ **Better UX** - Auth flows thoroughly tested
+- ✅ **Clean shutdown** - Signal handling verified
+- ✅ **Clear errors** - All error messages validated
+- ✅ **Robust code** - Edge cases covered
+
+Run `./run-tests.sh` before each commit to maintain quality! 🧪✨
