@@ -1,0 +1,31 @@
+services:
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-gateway
+    command: gateway
+    restart: unless-stopped
+    depends_on:
+      - spotify-mcp
+    volumes:
+      - ${HERMES_HOME:-${HOME}/.hermes}:/opt/data
+    environment:
+      HERMES_UID: ${HERMES_UID:-501}
+      HERMES_GID: ${HERMES_GID:-20}
+
+  spotify-mcp:
+    image: docker.io/allesy/spotify-mcp:latest
+    container_name: spotify-mcp
+    restart: unless-stopped
+    environment:
+      MCP_TRANSPORT: sse
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+      MCP_SSE_PATH: /sse
+      SPOTIPY_CLIENT_ID: ${SPOTIPY_CLIENT_ID}
+      SPOTIPY_CLIENT_SECRET: ${SPOTIPY_CLIENT_SECRET}
+      SPOTIPY_REDIRECT_URI: ${SPOTIPY_REDIRECT_URI:-http://127.0.0.1:8888/callback}
+      SPOTIPY_CACHE_PATH: /app/.cache/token
+    volumes:
+      - ${SPOTIFY_MCP_CACHE_DIR:-${HOME}/.cache/spotify-mcp}:/app/.cache
+    expose:
+      - "8000"

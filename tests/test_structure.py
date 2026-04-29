@@ -106,6 +106,7 @@ class StructureValidator:
             exclude_names = {
                 "main",
                 "load_settings",
+                "load_runtime_settings",
                 "FastMCP",
                 "List",
                 "Optional",

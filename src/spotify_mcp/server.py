@@ -3,7 +3,7 @@ from typing import List
 from mcp.server.fastmcp import FastMCP
 
 from spotify_mcp import tools as st
-from spotify_mcp.config import load_settings
+from spotify_mcp.config import load_runtime_settings, load_settings
 
 mcp = FastMCP("spotify-mcp")
 
@@ -223,12 +223,15 @@ async def set_volume(volume_percent: int) -> str:
 
 
 def main() -> None:
-    # Load settings early to validate required environment variables.
-    # This keeps behavior consistent across Docker and local runs.
     load_settings()
+    runtime = load_runtime_settings()
 
-    # Run the FastMCP server with stdio transport
-    mcp.run("stdio")
+    if runtime.transport == "sse":
+        mcp.settings.host = runtime.host
+        mcp.settings.port = runtime.port
+        mcp.settings.sse_path = runtime.sse_path
+
+    mcp.run(runtime.transport)
 
 
 if __name__ == "__main__":
