@@ -8,7 +8,9 @@ from spotify_mcp import server
 def test_main_runs_stdio_by_default(monkeypatch):
     monkeypatch.setenv("SPOTIPY_CLIENT_ID", "x")
     monkeypatch.setenv("SPOTIPY_CLIENT_SECRET", "y")
-    monkeypatch.setenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
+    monkeypatch.setenv(
+        "SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback"
+    )
     monkeypatch.delenv("MCP_TRANSPORT", raising=False)
 
     with patch.object(server.mcp, "run") as run:
@@ -20,7 +22,9 @@ def test_main_runs_stdio_by_default(monkeypatch):
 def test_main_runs_sse_when_configured(monkeypatch):
     monkeypatch.setenv("SPOTIPY_CLIENT_ID", "x")
     monkeypatch.setenv("SPOTIPY_CLIENT_SECRET", "y")
-    monkeypatch.setenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
+    monkeypatch.setenv(
+        "SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback"
+    )
     monkeypatch.setenv("MCP_TRANSPORT", "sse")
     monkeypatch.setenv("MCP_HOST", "0.0.0.0")
     monkeypatch.setenv("MCP_PORT", "8000")
