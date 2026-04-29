@@ -91,3 +91,47 @@ def load_settings() -> Settings:
         scope=scope,
         cache_path=cache_path,
     )
+
+
+@dataclass(frozen=True)
+class RuntimeSettings:
+    """Transport and binding settings for the MCP server."""
+
+    transport: str = "stdio"
+    host: str = "0.0.0.0"
+    port: int = 8000
+    sse_path: str = "/sse"
+
+
+def load_runtime_settings() -> RuntimeSettings:
+    """Load MCP transport settings from environment variables.
+
+    Raises:
+        ValueError: If env vars contain invalid values.
+    """
+    transport = os.getenv("MCP_TRANSPORT", "stdio").strip().lower()
+    if transport == "http":
+        transport = "sse"
+
+    if transport not in {"stdio", "sse"}:
+        raise ValueError("MCP_TRANSPORT must be one of: stdio, sse")
+
+    port_raw = os.getenv("MCP_PORT", "8000").strip()
+    try:
+        port = int(port_raw)
+    except ValueError as exc:
+        raise ValueError("MCP_PORT must be an integer") from exc
+
+    if not 1 <= port <= 65535:
+        raise ValueError("MCP_PORT must be between 1 and 65535")
+
+    sse_path = os.getenv("MCP_SSE_PATH", "/sse").strip() or "/sse"
+    if not sse_path.startswith("/"):
+        sse_path = f"/{sse_path}"
+
+    return RuntimeSettings(
+        transport=transport,
+        host=os.getenv("MCP_HOST", "0.0.0.0").strip() or "0.0.0.0",
+        port=port,
+        sse_path=sse_path,
+    )

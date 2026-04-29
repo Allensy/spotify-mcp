@@ -16,7 +16,8 @@ COPY src/ ./src/
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
 
-# The container runs over stdio; no port is exposed. CMD must keep process in foreground.
+EXPOSE 8000
+
 CMD ["python", "-u", "-m", "spotify_mcp.server"]
 
 

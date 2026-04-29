@@ -116,6 +116,71 @@ docker pull docker.io/allesy/spotify-mcp:latest
 
 Then follow the First-time OAuth section below and the MCP client config example, both of which reference the registry image.
 
+## Transport Modes
+
+This server supports two MCP transports:
+
+| Mode | Use case | How to activate |
+|------|----------|-----------------|
+| `stdio` | Cursor, Claude Desktop, any client that launches the MCP process | default (no env var needed) |
+| `sse` | Docker Compose sidecar, remote MCP clients (e.g. Hermes) | `MCP_TRANSPORT=sse` |
+
+The Docker image always defaults to `stdio` so existing MCP client configs keep working unchanged.
+
+### SSE mode environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_TRANSPORT` | `stdio` | Set to `sse` to enable HTTP/SSE mode |
+| `MCP_HOST` | `0.0.0.0` | Bind host |
+| `MCP_PORT` | `8000` | Bind port |
+| `MCP_SSE_PATH` | `/sse` | SSE endpoint path |
+
+### Run as SSE server (Docker)
+
+```bash
+docker run --rm \
+  -p 8000:8000 \
+  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -e MCP_TRANSPORT=sse \
+  -e MCP_HOST=0.0.0.0 \
+  -e MCP_PORT=8000 \
+  -e MCP_SSE_PATH=/sse \
+  -e SPOTIPY_CLIENT_ID=your-client-id \
+  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
+  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
+  docker.io/allesy/spotify-mcp:latest
+```
+
+### Docker Compose (standalone)
+
+Copy [`.env.example`](.env.example) to `.env`, fill in your credentials, then:
+
+```bash
+docker compose -f docker-compose.spotify-mcp.yml --env-file .env up
+```
+
+### Docker Compose with Hermes
+
+See [`examples/hermes/docker-compose.yml`](examples/hermes/docker-compose.yml) for a full Hermes + Spotify MCP Compose stack.
+
+Add this to your Hermes config (`~/.hermes/config.yaml`):
+
+```yaml
+mcp_servers:
+  spotify:
+    url: "http://spotify-mcp:8000/sse"
+```
+
+Then run:
+
+```bash
+docker compose -f examples/hermes/docker-compose.yml up
+```
+
+---
+
 ## Environment variables
 
 Provide these via your MCP client config (do not hardcode). These names match Spotipy conventions and are what the server expects.
