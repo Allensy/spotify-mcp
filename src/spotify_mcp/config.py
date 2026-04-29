@@ -93,12 +93,17 @@ def load_settings() -> Settings:
     )
 
 
+_DEFAULT_HOST = (
+    "0.0.0.0"  # nosec B104 — intentional bind-all for Docker SSE mode
+)
+
+
 @dataclass(frozen=True)
 class RuntimeSettings:
     """Transport and binding settings for the MCP server."""
 
     transport: str = "stdio"
-    host: str = "0.0.0.0"  # nosec B104
+    host: str = _DEFAULT_HOST
     port: int = 8000
     sse_path: str = "/sse"
 
@@ -131,8 +136,7 @@ def load_runtime_settings() -> RuntimeSettings:
 
     return RuntimeSettings(
         transport=transport,
-        host=os.getenv("MCP_HOST", "0.0.0.0").strip()
-        or "0.0.0.0",  # nosec B104
+        host=os.getenv("MCP_HOST", _DEFAULT_HOST).strip() or _DEFAULT_HOST,
         port=port,
         sse_path=sse_path,
     )
