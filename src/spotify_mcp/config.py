@@ -131,7 +131,8 @@ def load_runtime_settings() -> RuntimeSettings:
 
     return RuntimeSettings(
         transport=transport,
-        host=os.getenv("MCP_HOST", "0.0.0.0").strip() or "0.0.0.0",  # nosec B104
+        host=os.getenv("MCP_HOST", "0.0.0.0").strip()
+        or "0.0.0.0",  # nosec B104
         port=port,
         sse_path=sse_path,
     )
