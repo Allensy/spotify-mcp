@@ -98,7 +98,7 @@ class RuntimeSettings:
     """Transport and binding settings for the MCP server."""
 
     transport: str = "stdio"
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # nosec B104
     port: int = 8000
     sse_path: str = "/sse"
 
@@ -131,7 +131,7 @@ def load_runtime_settings() -> RuntimeSettings:
 
     return RuntimeSettings(
         transport=transport,
-        host=os.getenv("MCP_HOST", "0.0.0.0").strip() or "0.0.0.0",
+        host=os.getenv("MCP_HOST", "0.0.0.0").strip() or "0.0.0.0",  # nosec B104
         port=port,
         sse_path=sse_path,
     )
