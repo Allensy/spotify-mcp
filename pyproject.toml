@@ -43,7 +43,7 @@ classifiers = [
 dependencies = [
     "spotipy>=2.25.0",
     "python-dotenv>=1.0.1",
-    "mcp>=1.1.0",
+    "mcp>=1.1.0,<2",
 ]
 
 [project.optional-dependencies]
@@ -76,11 +76,11 @@ spotify-mcp = "spotify_mcp.cli.main:main_cli"
 spotify-mcp-auth = "spotify_mcp.cli.main:auth_init"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/spotify-mcp"
-Documentation = "https://github.com/yourusername/spotify-mcp#readme"
-Repository = "https://github.com/yourusername/spotify-mcp"
-"Bug Tracker" = "https://github.com/yourusername/spotify-mcp/issues"
-Changelog = "https://github.com/yourusername/spotify-mcp/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Allensy/spotify-mcp"
+Documentation = "https://github.com/Allensy/spotify-mcp#readme"
+Repository = "https://github.com/Allensy/spotify-mcp"
+"Bug Tracker" = "https://github.com/Allensy/spotify-mcp/issues"
+Changelog = "https://github.com/Allensy/spotify-mcp/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

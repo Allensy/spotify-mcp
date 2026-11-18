@@ -8,9 +8,13 @@
 
 A Model Context Protocol (MCP) server that exposes Spotify controls and queries as MCP tools using Spotipy.
 
+[Source code on GitHub](https://github.com/Allensy/spotify-mcp) · [Report an issue](https://github.com/Allensy/spotify-mcp/issues) · [Docker Hub image](https://hub.docker.com/r/allesy/spotify-mcp)
+
 **Ready to use via Docker** - No local Python install required!
 
 ## Quick Start (3 steps)
+
+You’ll need Docker and a Spotify developer app. Spotify requires the owner of a [Development Mode app](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) to have an active Spotify Premium subscription.
 
 ### 1. Get Spotify API Credentials
 
@@ -36,7 +40,7 @@ docker run --rm -it \
 
 - Open the URL shown in your browser
 - Authorize the app
-- Copy the full redirect URL from your browser and paste it back into the terminal
+- Copy the full redirect URL from your browser’s address bar and paste it into the terminal. If the browser says it can’t connect to `127.0.0.1`, you can still copy the URL.
 - Done! Token is saved.
 
 ### 3. Add to Your MCP Client
@@ -70,7 +74,7 @@ Add this to your MCP client config (e.g., `~/.cursor/mcp.json` for Cursor, or Cl
 
 **Important**: Replace `/Users/YOUR_USERNAME` with your actual home directory path (some MCP clients don't expand `${HOME}`).
 
-That's it! Restart your MCP client and start controlling Spotify! 🎵
+Restart your MCP client and try asking, **“Search Spotify for ‘Get Lucky’ by Daft Punk.”** A Spotify track result confirms that your client can reach the server and the server can reach Spotify. If the search fails, see [Troubleshooting](#troubleshooting).
 
 ---
 
@@ -101,7 +105,7 @@ That's it! Restart your MCP client and start controlling Spotify! 🎵
 ## Prerequisites
 
 - **Docker** installed on your system
-- **Spotify Developer app** (free) - Create one at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+- **Spotify Developer app** - Create one at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard). Development Mode app owners need Spotify Premium.
   - Client ID and Client Secret
   - Redirect URI: `http://127.0.0.1:8888/callback` added to app settings
   - Your Spotify email added to User Management (if in Development Mode)

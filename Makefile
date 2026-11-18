@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-cov lint format clean build publish docs
+.PHONY: help install install-dev test test-cov lint format clean build docs
 
 # Default target
 help:
@@ -19,7 +19,6 @@ help:
 	@echo "Building:"
 	@echo "  make build          Build distribution packages"
 	@echo "  make clean          Clean build artifacts"
-	@echo "  make publish        Publish to PyPI"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-build   Build Docker image"
@@ -84,12 +83,6 @@ clean:
 	rm -rf .coverage
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-
-publish: build
-	twine upload dist/*
-
-publish-test: build
-	twine upload --repository testpypi dist/*
 
 # Docker
 docker-build:

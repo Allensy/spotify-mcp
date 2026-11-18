@@ -1,8 +1,6 @@
-# Legacy requirements file for backward compatibility
-# For new installations, use: pip install -e .
-# Or from PyPI: pip install spotify-mcp
-# See pyproject.toml for full dependencies
+# Runtime dependencies for Docker and development from this checkout.
+# To install the local package, run: python -m pip install -e .
 
 spotipy>=2.25.0
 python-dotenv>=1.0.1
-mcp>=1.1.0
+mcp>=1.1.0,<2

@@ -213,12 +213,11 @@ Releases are handled by maintainers:
 2. Update CHANGELOG.md
 3. Create a new tag: `git tag v1.0.0`
 4. Push tag: `git push origin v1.0.0`
-5. GitHub Actions will automatically publish to PyPI
+5. GitHub Actions creates a GitHub release and publishes versioned Docker images
 
 ## Getting Help
 
-* **Questions?** Open a [Discussion](https://github.com/yourusername/spotify-mcp/discussions)
-* **Found a bug?** Open an [Issue](https://github.com/yourusername/spotify-mcp/issues)
+* **Have a question or found a bug?** Open an [issue](https://github.com/Allensy/spotify-mcp/issues/new/choose).
 * **Want to contribute but don't know where to start?** Look for issues labeled `good first issue`
 
 ## Recognition

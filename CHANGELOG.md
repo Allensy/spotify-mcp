@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - MIT License
 - Proper Python package structure (`src/` layout)
-- PyPI-ready with pyproject.toml
+- Python package metadata in pyproject.toml
 - Contributor guidelines (CONTRIBUTING.md)
 - Code of Conduct (CODE_OF_CONDUCT.md)
 - Issue and PR templates
@@ -132,4 +132,4 @@ We use [Semantic Versioning](https://semver.org/):
 - **Security** for vulnerability fixes
 
 ---
-[1.0.0]: https://github.com/yourusername/spotify-mcp/releases/tag/v1.0.0
+[1.0.0]: https://github.com/Allensy/spotify-mcp/releases/tag/v1.0.0

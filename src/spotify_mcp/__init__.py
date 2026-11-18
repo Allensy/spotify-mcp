@@ -9,7 +9,7 @@ Example:
     >>> from spotify_mcp import server
     >>> server.main()
 
-For more information, see: https://github.com/yourusername/spotify-mcp
+For more information, see: https://github.com/Allensy/spotify-mcp
 """
 
 from spotify_mcp.__version__ import __version__
