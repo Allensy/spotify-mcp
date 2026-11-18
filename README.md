@@ -16,32 +16,29 @@ A Model Context Protocol (MCP) server that exposes Spotify controls and queries 
 
 You’ll need Docker and a Spotify developer app. Spotify requires the owner of a [Development Mode app](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) to have an active Spotify Premium subscription.
 
-### 1. Get Spotify API Credentials
+### 1. Register a Spotify app
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create an app (or use an existing one)
-3. Note your **Client ID** and **Client Secret**
+3. Copy your **Client ID**
 4. Add `http://127.0.0.1:8888/callback` to **Redirect URIs** in app settings
 5. If your app is in "Development Mode", add your Spotify account email to the **User Management** section
 
-### 2. One-Time Authentication (Docker)
+### 2. Sign in to Spotify (Docker)
 
-Run this command to authenticate (replace with your credentials):
+Use your Client ID in this command:
 
 ```bash
 docker run --rm -it \
-  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -p 127.0.0.1:8888:8888 \
+  -v "${HOME}/.cache/spotify-mcp:/app/.cache" \
   -e SPOTIPY_CLIENT_ID=your-client-id \
-  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
-  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
-  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token-pkce.json \
+  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init \
+  --no-open --callback-bind 0.0.0.0
 ```
 
-- Open the URL shown in your browser
-- Authorize the app
-- Copy the full redirect URL from your browser’s address bar and paste it into the terminal. If the browser says it can’t connect to `127.0.0.1`, you can still copy the URL.
-- Done! Token is saved.
+Open the URL printed in the terminal and approve access. The browser returns to `127.0.0.1`, and the command saves the token and exits. The callback port is only open during sign-in. For a remote Docker host, use [manual sign-in](#manual-sign-in).
 
 ### 3. Add to Your MCP Client
 
@@ -56,16 +53,12 @@ Add this to your MCP client config (e.g., `~/.cursor/mcp.json` for Cursor, or Cl
         "run", "--rm", "-i",
         "-v", "/Users/YOUR_USERNAME/.cache/spotify-mcp:/app/.cache",
         "-e", "SPOTIPY_CLIENT_ID",
-        "-e", "SPOTIPY_CLIENT_SECRET",
-        "-e", "SPOTIPY_REDIRECT_URI",
         "-e", "SPOTIPY_CACHE_PATH",
         "docker.io/allesy/spotify-mcp:latest"
       ],
       "env": {
         "SPOTIPY_CLIENT_ID": "your-client-id",
-        "SPOTIPY_CLIENT_SECRET": "your-client-secret",
-        "SPOTIPY_REDIRECT_URI": "http://127.0.0.1:8888/callback",
-        "SPOTIPY_CACHE_PATH": "/app/.cache/token"
+        "SPOTIPY_CACHE_PATH": "/app/.cache/token-pkce.json"
       }
     }
   }
@@ -106,7 +99,7 @@ Restart your MCP client and try asking, **“Search Spotify for ‘Get Lucky’ 
 
 - **Docker** installed on your system
 - **Spotify Developer app** - Create one at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard). Development Mode app owners need Spotify Premium.
-  - Client ID and Client Secret
+  - Client ID
   - Redirect URI: `http://127.0.0.1:8888/callback` added to app settings
   - Your Spotify email added to User Management (if in Development Mode)
 
@@ -151,15 +144,13 @@ docker run --rm \
   -e MCP_PORT=8000 \
   -e MCP_SSE_PATH=/sse \
   -e SPOTIPY_CLIENT_ID=your-client-id \
-  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
-  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
-  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token-pkce.json \
   docker.io/allesy/spotify-mcp:latest
 ```
 
 ### Docker Compose (standalone)
 
-Copy [`.env.example`](.env.example) to `.env`, fill in your credentials, then:
+Copy [`.env.example`](.env.example) to `.env`, set your Client ID, and complete the Docker sign-in above using the same cache mount and file. Then start the server:
 
 ```bash
 docker compose -f docker-compose.spotify-mcp.yml --env-file .env up
@@ -167,7 +158,7 @@ docker compose -f docker-compose.spotify-mcp.yml --env-file .env up
 
 ### Docker Compose with Hermes
 
-See [`examples/hermes/docker-compose.yml`](examples/hermes/docker-compose.yml) for a full Hermes + Spotify MCP Compose stack.
+See [`examples/hermes/docker-compose.yml`](examples/hermes/docker-compose.yml) for a full Hermes + Spotify MCP Compose stack. That example uses `/app/.cache/token`. When switching it to PKCE, use a new cache path in both the Compose configuration and your sign-in command.
 
 Add this to your Hermes config (`~/.hermes/config.yaml`):
 
@@ -187,18 +178,11 @@ docker compose -f examples/hermes/docker-compose.yml up
 
 ## Environment variables
 
-Provide these via your MCP client config (do not hardcode). These names match Spotipy conventions and are what the server expects.
-
-Required:
-
-- `SPOTIPY_CLIENT_ID`
-- `SPOTIPY_CLIENT_SECRET`
-- `SPOTIPY_REDIRECT_URI`
-
-Optional:
-
-- `SPOTIFY_SCOPE`: Override the default OAuth scope (space-delimited scopes). Defaults to a broad set enabling playback and library/playlist operations.
-- `SPOTIPY_CACHE_PATH`: Token cache file path (inside container). Useful when you want to control the exact cache location. When running Docker, combine with a bind mount to persist the cache.
+- `SPOTIPY_CLIENT_ID` is required.
+- `SPOTIFY_AUTH_MODE` accepts `pkce` or `legacy`. Without it, a nonblank `SPOTIPY_CLIENT_SECRET` selects legacy and the absence of a secret selects PKCE.
+- `SPOTIPY_REDIRECT_URI` defaults to `http://127.0.0.1:8888/callback` for PKCE. Legacy requires this value and `SPOTIPY_CLIENT_SECRET`.
+- `SPOTIFY_SCOPE` overrides the default Spotify scopes. Changing scopes can require sign-in again.
+- `SPOTIPY_CACHE_PATH` overrides the token file. Use the same path for sign-in and runtime. For Docker, both commands need the same host bind mount.
 
 ## Build
 
@@ -206,101 +190,34 @@ Optional:
 docker build -t spotify-mcp:latest .
 ```
 
-## Using with an MCP client (Docker/stdio)
+## Other sign-in options
 
-Example MCP client configuration (JSON) that runs the server via Docker and passes env vars. Adapt paths for your client (Claude Desktop, Cursor, etc.).
+### Manual sign-in
 
-```json
-{
-  "mcpServers": {
-    "spotify-mcp": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "-v",
-        "${HOME}/.cache/spotify-mcp:/app/.cache",
-        "-e", "SPOTIPY_CLIENT_ID",
-        "-e", "SPOTIPY_CLIENT_SECRET",
-        "-e", "SPOTIPY_REDIRECT_URI",
-        "-e", "SPOTIPY_CACHE_PATH",
-        "docker.io/allesy/spotify-mcp:latest"
-      ],
-      "env": {
-        "SPOTIPY_CLIENT_ID": "your-client-id",
-        "SPOTIPY_CLIENT_SECRET": "your-client-secret",
-        "SPOTIPY_REDIRECT_URI": "http://127.0.0.1:8888/callback",
-        "SPOTIPY_CACHE_PATH": "/app/.cache/token"
-      }
-    }
-  }
-}
-```
-
-Notes:
-
-- The volume mount `${HOME}/.cache/spotify-mcp:/app/.cache` persists Spotipy's token cache between runs. If you set `SPOTIPY_CACHE_PATH`, ensure it points somewhere under `/app/.cache` (e.g., `/app/.cache/token`). Some MCP clients do not expand `${HOME}`; if you see issues, use an absolute path like `/Users/<you>/.cache/spotify-mcp:/app/.cache`.
-- The redirect URI must exactly match the one configured in your Spotify app.
-
-## First-time OAuth
-
-Spotipy performs user authorization on first use.
-
-### Zero-install Docker OAuth (recommended)
-
-Run this once to create and persist a token cache (no local installs needed):
+Use this if Docker runs on another machine or the callback port is unavailable. Open the printed link in your browser and paste the full redirect URL from its address bar into the terminal. The browser may report that it cannot connect to `127.0.0.1`, and the URL can still be copied.
 
 ```bash
 docker run --rm -it \
-  -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+  -v "${HOME}/.cache/spotify-mcp:/app/.cache" \
   -e SPOTIPY_CLIENT_ID=your-client-id \
-  -e SPOTIPY_CLIENT_SECRET=your-client-secret \
-  -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
-  -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init
+  -e SPOTIPY_CACHE_PATH=/app/.cache/token-pkce.json \
+  docker.io/allesy/spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init --manual
 ```
 
-Follow the prompt: open the printed URL, log in, then paste the redirected URL back into the terminal. The token is saved to `/app/.cache/token` (on host: `${HOME}/.cache/spotify-mcp/token`).
+### Existing client-secret installs
 
-After that, your MCP client can run the server container and reuse the cached token automatically.
-
-### Alternative: Local run once
-
-Recommended flow for a smooth auth experience:
-
-1. Install dependencies and run the auth script locally:
-
-   ```bash
-   python3 -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   
-   export SPOTIPY_CLIENT_ID=your-client-id
-   export SPOTIPY_CLIENT_SECRET=your-client-secret
-   export SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
-   export SPOTIPY_CACHE_PATH=/Users/$(whoami)/.cache/spotify-mcp/token
-   
-   python -m spotify_mcp.cli.auth_init
-   ```
-
-2. Follow the prompt: open the URL in your browser, authorize, and paste the redirect URL back.
-3. The token is now cached and can be used by the MCP server.
-
-Alternatively, you can let your MCP client handle the OAuth automatically on first connection (it will open your browser).
+A configuration with `SPOTIPY_CLIENT_SECRET` and no explicit `SPOTIFY_AUTH_MODE` continues to use the original manual flow and cache. To sign in again, run `spotify-mcp-auth` or the Docker auth module with the same Client ID, secret, redirect URI, and cache path you already use. To switch to PKCE, remove the secret or set `SPOTIFY_AUTH_MODE=pkce`, choose a separate cache path, and sign in again.
 
 ## Local development (without Docker)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-export SPOTIPY_CLIENT_ID=...
-export SPOTIPY_CLIENT_SECRET=...
-export SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
-export PYTHONPATH=src
-python -m spotify_mcp.server
+python -m pip install -e .
+export SPOTIPY_CLIENT_ID=your-client-id
+spotify-mcp-auth
 ```
 
-Your MCP client can also run `python -m spotify_mcp.server` directly instead of Docker if preferred (set `PYTHONPATH=src` in the env).
+For local PKCE, `spotify-mcp-auth` opens your browser and writes the token to `~/.cache/spotify-mcp/token-pkce.json` by default. To start the server from your MCP client, use the absolute path to `spotify-mcp` inside your virtual environment as the command and set `SPOTIPY_CLIENT_ID` to the same value. Pass any redirect or cache overrides to both commands.
 
 ## API reference (tool signatures)
 
@@ -351,12 +268,7 @@ Your MCP client can also run `python -m spotify_mcp.server` directly instead of 
 
 **Token Expired or Invalid**
 
-- Delete the cached token and re-authenticate:
-
-  ```bash
-  rm ~/.cache/spotify-mcp/token
-  # Then run the auth_init command again
-  ```
+- Run the same sign-in command again. If you changed the Client ID or authentication mode, use a separate cache path or move the old cache aside first.
 
 ### Docker Issues
 
@@ -367,7 +279,7 @@ Your MCP client can also run `python -m spotify_mcp.server` directly instead of 
 
 **Container Can't Find Token**
 
-- Ensure `SPOTIPY_CACHE_PATH` in your MCP config matches the path used during authentication (`/app/.cache/token`)
+- Ensure `SPOTIPY_CACHE_PATH` in your MCP config matches the path used during authentication (`/app/.cache/token-pkce.json` in the quick start)
 - Check that the volume mount maps correctly: `-v /local/path:/app/.cache`
 
 ### Playback Issues

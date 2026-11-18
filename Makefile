@@ -85,6 +85,12 @@ clean:
 	find . -type f -name "*.pyc" -delete
 
 # Docker
+spotify_auth_mode = $(or $(strip $(SPOTIFY_AUTH_MODE)),$(if $(strip $(SPOTIPY_CLIENT_SECRET)),legacy,pkce))
+spotify_cache_path = $(or $(SPOTIPY_CACHE_PATH),$(if $(filter pkce,$(spotify_auth_mode)),/app/.cache/token-pkce.json,/app/.cache/token))
+spotify_redirect = $(or $(SPOTIPY_REDIRECT_URI),http://127.0.0.1:8888/callback)
+spotify_callback_port = $(firstword $(subst /, ,$(patsubst http://127.0.0.1:%,%,$(filter http://127.0.0.1:%,$(spotify_redirect)))))
+spotify_auto_callback = $(and $(filter pkce,$(spotify_auth_mode)),$(spotify_callback_port))
+
 docker-build:
 	docker build -t spotify-mcp:latest .
 
@@ -93,18 +99,22 @@ docker-run:
 		-v ${HOME}/.cache/spotify-mcp:/app/.cache \
 		-e SPOTIPY_CLIENT_ID \
 		-e SPOTIPY_CLIENT_SECRET \
-		-e SPOTIPY_REDIRECT_URI \
-		-e SPOTIPY_CACHE_PATH \
+		-e SPOTIFY_AUTH_MODE=$(spotify_auth_mode) \
+		-e "SPOTIPY_REDIRECT_URI=$(spotify_redirect)" \
+		-e "SPOTIPY_CACHE_PATH=$(spotify_cache_path)" \
 		spotify-mcp:latest
 
 docker-auth:
 	docker run --rm -it \
+		$(if $(spotify_auto_callback),-p 127.0.0.1:$(spotify_callback_port):$(spotify_callback_port)) \
 		-v ${HOME}/.cache/spotify-mcp:/app/.cache \
 		-e SPOTIPY_CLIENT_ID \
 		-e SPOTIPY_CLIENT_SECRET \
-		-e SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback \
-		-e SPOTIPY_CACHE_PATH=/app/.cache/token \
-		spotify-mcp:latest python -u /app/src/spotify_mcp/cli/main.py
+		-e SPOTIFY_AUTH_MODE=$(spotify_auth_mode) \
+		-e "SPOTIPY_REDIRECT_URI=$(spotify_redirect)" \
+		-e "SPOTIPY_CACHE_PATH=$(spotify_cache_path)" \
+		spotify-mcp:latest python -u -m spotify_mcp.cli.auth_init \
+		$(if $(spotify_auto_callback),--no-open --callback-bind 0.0.0.0,--manual)
 
 # Documentation
 docs:

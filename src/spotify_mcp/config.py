@@ -7,22 +7,21 @@ truth. Supports optional overrides for OAuth scope and token cache path while
 keeping backward compatibility with existing Docker/MCP configurations that
 provide the standard Spotipy environment variables.
 
-Required environment variables:
-- SPOTIPY_CLIENT_ID
-- SPOTIPY_CLIENT_SECRET
-- SPOTIPY_REDIRECT_URI
-
-Optional environment variables:
-- SPOTIFY_SCOPE: Overrides the default OAuth scope string
-- SPOTIPY_CACHE_PATH: Sets a specific token cache file path (inside the
-  container or host if bind-mounted)
+SPOTIPY_CLIENT_ID is required. SPOTIFY_AUTH_MODE selects pkce or legacy.
+Legacy requires SPOTIPY_CLIENT_SECRET and SPOTIPY_REDIRECT_URI. PKCE uses
+a loopback redirect by default. SPOTIFY_SCOPE and SPOTIPY_CACHE_PATH can
+override the scope and token cache location.
 """
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Literal, cast
+
+AuthMode = Literal["pkce", "legacy"]
+DEFAULT_REDIRECT_URI = "http://127.0.0.1:8888/callback"
 
 DEFAULT_SCOPE: str = (
     "user-read-playback-state "
@@ -45,10 +44,11 @@ class Settings:
     """Strongly-typed configuration values for the server."""
 
     client_id: str
-    client_secret: str
+    client_secret: str | None = field(repr=False)
     redirect_uri: str
     scope: str = DEFAULT_SCOPE
-    cache_path: Optional[str] = None
+    cache_path: str | None = None
+    auth_mode: AuthMode = "legacy"
 
 
 def load_settings() -> Settings:
@@ -64,17 +64,28 @@ def load_settings() -> Settings:
     client_id = os.getenv("SPOTIPY_CLIENT_ID")
     client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
     redirect_uri = os.getenv("SPOTIPY_REDIRECT_URI")
+    if client_secret is not None and not client_secret.strip():
+        client_secret = None
 
-    missing = [
-        name
-        for name, value in (
-            ("SPOTIPY_CLIENT_ID", client_id),
-            ("SPOTIPY_CLIENT_SECRET", client_secret),
-            ("SPOTIPY_REDIRECT_URI", redirect_uri),
-        )
-        if not value
-    ]
-    if missing:
+    mode = os.getenv("SPOTIFY_AUTH_MODE", "").strip().lower()
+    mode = mode or ("legacy" if client_secret else "pkce")
+    if mode not in {"legacy", "pkce"}:
+        raise RuntimeError("SPOTIFY_AUTH_MODE must be pkce or legacy.")
+    auth_mode = cast(AuthMode, mode)
+
+    missing = []
+    if not client_id:
+        missing.append("SPOTIPY_CLIENT_ID")
+    if auth_mode == "legacy":
+        if not client_secret:
+            missing.append("SPOTIPY_CLIENT_SECRET")
+        if not redirect_uri:
+            missing.append("SPOTIPY_REDIRECT_URI")
+    else:
+        client_secret = None
+        redirect_uri = redirect_uri or DEFAULT_REDIRECT_URI
+
+    if not client_id or not redirect_uri or missing:
         raise RuntimeError(
             "Missing required environment variables: "
             + ", ".join(missing)
@@ -83,6 +94,8 @@ def load_settings() -> Settings:
 
     scope = os.getenv("SPOTIFY_SCOPE", DEFAULT_SCOPE)
     cache_path = os.getenv("SPOTIPY_CACHE_PATH") or None
+    if auth_mode == "pkce" and cache_path is None:
+        cache_path = str(Path.home() / ".cache/spotify-mcp/token-pkce.json")
 
     return Settings(
         client_id=client_id,
@@ -90,6 +103,7 @@ def load_settings() -> Settings:
         redirect_uri=redirect_uri,
         scope=scope,
         cache_path=cache_path,
+        auth_mode=auth_mode,
     )
 
 
