@@ -195,7 +195,7 @@ class MCPIntegrationTester:
                 self.log_test(
                     "Config Validation", "FAIL", error="Missing client_id"
                 )
-            elif not settings.client_secret:
+            elif settings.auth_mode == "legacy" and not settings.client_secret:
                 self.log_test(
                     "Config Validation", "FAIL", error="Missing client_secret"
                 )

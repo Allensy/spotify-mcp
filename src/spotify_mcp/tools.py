@@ -35,10 +35,13 @@ Functions:
 
 from typing import List, Union
 
-import spotipy
 from dotenv import load_dotenv
-from spotipy.oauth2 import SpotifyOAuth
 
+from spotify_mcp.auth import (
+    AuthenticatedSpotify,
+    AuthenticationRequired,
+    get_access_token,
+)
 from spotify_mcp.config import load_settings
 
 # Load a local .env if present. In Docker/MCP usage, envs should come from the process environment.
@@ -88,23 +91,8 @@ __all__ = [
 
 
 def get_spotify_client():
-    """
-    Create and return an authenticated Spotipy client using credentials from environment variables.
-
-    Returns:
-        spotipy.Spotify: An authenticated Spotipy client instance.
-    """
-    settings = _get_settings()
-    auth_manager_kwargs = {
-        "client_id": settings.client_id,
-        "client_secret": settings.client_secret,
-        "redirect_uri": settings.redirect_uri,
-        "scope": settings.scope,
-    }
-    if settings.cache_path:
-        auth_manager_kwargs["cache_path"] = settings.cache_path
-
-    return spotipy.Spotify(auth_manager=SpotifyOAuth(**auth_manager_kwargs))
+    """Return a client using a cached or refreshed Spotify access token."""
+    return AuthenticatedSpotify(auth=get_access_token(_get_settings()))
 
 
 def get_current_playback():
@@ -166,6 +154,8 @@ async def play() -> str:
     try:
         sp.start_playback()
         return "Playback started."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error starting playback: {e}"
 
@@ -180,6 +170,8 @@ async def pause() -> str:
     try:
         sp.pause_playback()
         return "Playback paused."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error pausing playback: {e}"
 
@@ -194,6 +186,8 @@ async def next_track():
     try:
         sp.next_track()
         return "Skipped to next track."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error skipping to next track: {e}"
 
@@ -208,6 +202,8 @@ async def previous_track():
     try:
         sp.previous_track()
         return "Went to previous track."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error going to previous track: {e}"
 
@@ -249,6 +245,8 @@ async def play_song(song_name: str):
     try:
         sp.start_playback(uris=[track_uri])
         return f"Now playing: {track_name} by {artists}."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error playing '{track_name}': {e}"
 
@@ -281,6 +279,8 @@ async def play_song_by_id(song_id: str):
             playlist_name = playlist.get("name", "Playlist")
             sp.start_playback(context_uri=playlist_uri)
             return f"Now playing playlist: {playlist_name}."
+        except AuthenticationRequired:
+            raise
         except Exception as e:
             return f"Error playing playlist '{song_id}': {e}"
 
@@ -296,6 +296,8 @@ async def play_song_by_id(song_id: str):
         artists = ", ".join(artist["name"] for artist in track["artists"])
         sp.start_playback(uris=[track_uri])
         return f"Now playing: {track_name} by {artists}."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error playing track '{song_id}': {e}"
 
@@ -383,6 +385,8 @@ async def list_playlist_songs(
             track_id = track.get("id", "N/A")
             formatted.append(f"{name} by {artists} [ID: {track_id}]")
         return "\n".join(formatted)
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error fetching playlist songs: {e}"
 
@@ -414,6 +418,8 @@ async def add_songs_to_liked(song_ids: Union[str, List[str]]):
     try:
         sp.current_user_saved_tracks_add(cleaned_ids)
         return f"Added {len(cleaned_ids)} track(s) to your Liked Songs."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error adding track(s) to Liked Songs: {e}"
 
@@ -447,6 +453,8 @@ async def add_songs_to_playlist(
     try:
         sp.playlist_add_items(playlist_id, uris)
         return f"Added {len(uris)} track(s) to playlist {playlist_id}."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error adding track(s) to playlist {playlist_id}: {e}"
 
@@ -458,6 +466,8 @@ async def get_liked_songs_total() -> int:
         # Spotify returns the total count in the paging object;
         # limit=1 keeps the payload tiny.
         return sp.current_user_saved_tracks(limit=1)["total"]
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         raise Exception(f"Error fetching liked songs total: {e}")
 
@@ -487,6 +497,8 @@ async def add_to_queue(track_id: str) -> str:
         track_name = track["name"]
         artists = ", ".join(artist["name"] for artist in track["artists"])
         return f"Added '{track_name}' by {artists} to queue."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error adding track to queue: {e}"
 
@@ -517,6 +529,8 @@ async def get_queue() -> str:
 
         return "\n".join(formatted)
 
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error getting queue: {e}"
 
@@ -553,6 +567,8 @@ async def get_recently_played(limit: int = 20) -> str:
 
         return "\n".join(formatted)
 
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error getting recently played tracks: {e}"
 
@@ -595,6 +611,8 @@ async def get_top_tracks(
 
         return "\n".join(formatted)
 
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error getting top tracks: {e}"
 
@@ -640,6 +658,8 @@ async def get_top_artists(
 
         return "\n".join(formatted)
 
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error getting top artists: {e}"
 
@@ -674,6 +694,8 @@ async def list_devices() -> str:
 
         return "\n".join(formatted)
 
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error getting devices: {e}"
 
@@ -693,6 +715,8 @@ async def transfer_playback(device_id: str) -> str:
     try:
         sp.transfer_playback(device_id)
         return "Playback transferred to the selected device."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error transferring playback: {e}"
 
@@ -713,6 +737,8 @@ async def set_shuffle(state: bool) -> str:
         sp.shuffle(state)
         status = "enabled" if state else "disabled"
         return f"Shuffle mode {status}."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error setting shuffle mode: {e}"
 
@@ -732,6 +758,8 @@ async def set_repeat(state: str) -> str:
     try:
         sp.repeat(state)
         return f"Repeat mode set to '{state}'."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error setting repeat mode: {e}"
 
@@ -753,6 +781,8 @@ async def seek_position(position_ms: int) -> str:
         minutes = position_ms // 60000
         seconds = (position_ms % 60000) // 1000
         return f"Seeked to {minutes}:{seconds:02d} in the current track."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error seeking in track: {e}"
 
@@ -772,5 +802,7 @@ async def set_volume(volume_percent: int) -> str:
     try:
         sp.volume(volume_percent)
         return f"Volume set to {volume_percent}%."
+    except AuthenticationRequired:
+        raise
     except Exception as e:
         return f"Error setting volume: {e}"

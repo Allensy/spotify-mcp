@@ -227,27 +227,20 @@ If you have an MCP client configured (like Claude Desktop):
    docker build -t spotify-mcp:test .
    ```
 
-2. **Run Authentication**
+2. **Run browser authentication** with a Spotify Developer Dashboard app registered for `http://127.0.0.1:8888/callback`.
    ```bash
    docker run --rm -it \
-     -v ${HOME}/.cache/spotify-mcp:/app/.cache \
+     -p 127.0.0.1:8888:8888 \
+     -v "${HOME}/.cache/spotify-mcp:/app/.cache" \
      -e SPOTIPY_CLIENT_ID=your_id \
-     -e SPOTIPY_CLIENT_SECRET=your_secret \
-     -e SPOTIPY_REDIRECT_URI=http://localhost:8765/callback \
-     -e SPOTIPY_CACHE_PATH=/app/.cache/token \
-     spotify-mcp:test python -u auth_init.py
+     -e SPOTIPY_CACHE_PATH=/app/.cache/token-pkce.json \
+     spotify-mcp:test python -u -m spotify_mcp.cli.auth_init \
+     --no-open --callback-bind 0.0.0.0
    ```
 
-3. **Test MCP Server in Docker**
-   ```bash
-   docker run --rm -i \
-     -v ${HOME}/.cache/spotify-mcp:/app/.cache \
-     -e SPOTIPY_CLIENT_ID \
-     -e SPOTIPY_CLIENT_SECRET \
-     -e SPOTIPY_REDIRECT_URI \
-     -e SPOTIPY_CACHE_PATH \
-     spotify-mcp:test
-   ```
+3. **Test the MCP server** using the [README client configuration](README.md#3-add-to-your-mcp-client) with `spotify-mcp:test`, the same Client ID, and the same volume and token path. Verify a search succeeds. Check that starting the client without a saved token returns a sign-in instruction and still allows tool discovery.
+
+4. **Check compatibility before release.** Run manual sign-in with no published callback port, and verify that a client-secret setup can use its existing cache. The automated suite mocks Spotify. Run a real sign-in and search separately before releasing.
 
 ## Troubleshooting
 
